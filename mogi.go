@@ -3,12 +3,27 @@ package mogi
 import (
 	"database/sql"
 	"database/sql/driver"
+	"errors"
+)
+
+var (
+	ErrUnstubbed  = errors.New("query not stubbed")
+	ErrUnresolved = errors.New("query matched but no stub data")
 )
 
 func init() {
 	drv = newDriver()
 	sql.Register("mogi", drv)
 }
+
+// Reset removes all the stubs that have been set
+func Reset() {
+	drv.conn.stubs = nil
+}
+
+// func Replace() {
+// 	drv.conn = newConn()
+// }
 
 var _ driver.Stmt = &stmt{}
 var _ driver.Conn = &conn{}

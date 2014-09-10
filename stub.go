@@ -1,7 +1,6 @@
 package mogi
 
 import (
-	"database/sql"
 	"database/sql/driver"
 )
 
@@ -39,17 +38,16 @@ func (s *stub) matches(in input) bool {
 }
 
 func (s *stub) rows(in input) (*rows, error) {
-	if s.err != nil {
+	switch {
+	case s.err != nil:
 		return nil, s.err
+	case s.data == nil && s.err == nil:
+		// try to resolve the values
+		if s.resolve == nil {
+			return nil, ErrUnresolved
+		}
+		s.resolve(in)
 	}
-	if s.rows == nil {
-		return nil, sql.ErrNoRows
-	}
-	if s.resolve == nil {
-		// TODO better error message
-		panic("values not set!")
-	}
-	s.resolve(in)
 	return newRows(in.cols(), s.data), nil
 }
 

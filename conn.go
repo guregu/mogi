@@ -18,7 +18,6 @@ func newConn() *conn {
 func addStub(s *stub) {
 	drv.conn.stubs = append(drv.conn.stubs, s)
 	sort.Sort(drv.conn.stubs)
-	log.Printf("%#v", drv.conn.stubs)
 }
 
 func (c *conn) Prepare(query string) (driver.Stmt, error) {
@@ -40,12 +39,12 @@ func (c *conn) Query(query string, args []driver.Value) (driver.Rows, error) {
 	}
 	for _, c := range c.stubs {
 		if c.matches(in) {
-			log.Println("match!", c)
 			return c.rows(in)
 		}
 	}
-	log.Println("got query", query, args)
-	return &rows{}, nil
+	// TODO verbose flag
+	log.Println("Unstubbed query", query, args)
+	return nil, ErrUnstubbed
 }
 
 // TODO exec
