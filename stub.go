@@ -13,9 +13,11 @@ type stub struct {
 	resolve func(input)
 }
 
-func Select() *stub {
+func Select(cols ...string) *stub {
 	return &stub{
-		chain: condchain{&selectCond{}},
+		chain: condchain{&selectCond{
+			cols: cols,
+		}},
 	}
 }
 

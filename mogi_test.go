@@ -14,17 +14,19 @@ const (
 )
 
 var (
-	beer1 = beer{
-		id:      1,
-		name:    "Yona Yona Ale",
-		brewery: "Yo-Ho Brewing",
-		pct:     5.5,
-	}
-	beer2 = beer{
-		id:      2,
-		name:    "Punk IPA",
-		brewery: "BrewDog",
-		pct:     5.6,
+	beers = map[int]beer{
+		1: beer{
+			id:      1,
+			name:    "Yona Yona Ale",
+			brewery: "Yo-Ho Brewing",
+			pct:     5.5,
+		},
+		2: beer{
+			id:      2,
+			name:    "Punk IPA",
+			brewery: "BrewDog",
+			pct:     5.6,
+		},
 	}
 )
 
@@ -37,11 +39,35 @@ type beer struct {
 
 func TestMogi(t *testing.T) {
 	defer mogi.Reset()
-
 	db := openDB()
+
+	// select (any columns)
 	mogi.Select().From("beer").StubCSV(beerCSV)
+	runBeerSelectQuery(t, db)
+
+	// test reset
+	mogi.Reset()
+	_, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE pct > ?", 5)
+	if err != mogi.ErrUnstubbed {
+		t.Error("after reset, err should be ErrUnstubbed but is", err)
+	}
+
+	// select specific columns
+	mogi.Select("id", "name", "brewery", "pct").From("beer").StubCSV(beerCSV)
+	runBeerSelectQuery(t, db)
+
+	// select the "wrong" columns
+	mogi.Reset()
+	mogi.Select("hello", "👞").From("beer").StubCSV(beerCSV)
+	_, err = db.Query("SELECT id, name, brewery, pct FROM beer WHERE pct > ?", 5)
+	if err != mogi.ErrUnstubbed {
+		t.Error("with unmatched query, err should be ErrUnstubbed but is", err)
+	}
+}
+
+func runBeerSelectQuery(t *testing.T, db *sql.DB) {
 	expectCols := []string{"id", "name", "brewery", "pct"}
-	rows, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE pct > 5", 7)
+	rows, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE pct > ?", 5)
 	checkNil(t, err)
 	cols, err := rows.Columns()
 	checkNil(t, err)
@@ -57,14 +83,13 @@ func TestMogi(t *testing.T) {
 	}
 }
 
+func TestReset(t *testing.T) {
+
+}
+
 func checkBeer(t *testing.T, b beer, id int) {
-	var cmp beer
-	switch id {
-	case 1:
-		cmp = beer1
-	case 2:
-		cmp = beer2
-	default:
+	cmp, ok := beers[id]
+	if !ok {
 		t.Error("unknown beer", id)
 		return
 	}

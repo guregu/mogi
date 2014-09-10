@@ -1,6 +1,7 @@
 package mogi
 
 import (
+	"reflect"
 	// "database/sql"
 	// "database/sql/driver"
 
@@ -22,11 +23,22 @@ func (chain *condchain) matches(in input) bool {
 	return true
 }
 
-type selectCond struct{}
+type selectCond struct {
+	cols []string
+}
 
 func (sc *selectCond) matches(in input) bool {
 	_, ok := in.statement.(*sqlparser.Select)
-	return ok
+	if !ok {
+		return false
+	}
+
+	// zero parameters means anything
+	if len(sc.cols) == 0 {
+		return true
+	}
+
+	return reflect.DeepEqual(sc.cols, in.cols())
 }
 
 type tableCond struct {
