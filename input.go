@@ -2,6 +2,7 @@ package mogi
 
 import (
 	"database/sql/driver"
+	"strconv"
 
 	"github.com/youtube/vitess/go/vt/sqlparser"
 )
@@ -10,6 +11,8 @@ type input struct {
 	query     string
 	statement sqlparser.Statement
 	args      []driver.Value
+
+	argCursor int
 }
 
 func newInput(query string, args []driver.Value) (in input, err error) {
@@ -38,4 +41,55 @@ func (in input) cols() []string {
 		}
 	}
 	return cols
+}
+
+func (in input) where() map[string]interface{} {
+	switch x := in.statement.(type) {
+	case *sqlparser.Select:
+		vals := in.extract(nil, x.Where.Expr)
+		return vals
+	}
+	return nil
+}
+
+func (in input) extract(vals map[string]interface{}, expr sqlparser.BoolExpr) map[string]interface{} {
+	if vals == nil {
+		vals = make(map[string]interface{})
+	}
+	switch x := expr.(type) {
+	case *sqlparser.AndExpr:
+		in.extract(vals, x.Left)
+		in.extract(vals, x.Right)
+	case *sqlparser.ComparisonExpr:
+		column := in.valToInterface(x.Left).(string)
+		vals[column] = in.valToInterface(x.Right)
+	}
+	return vals
+}
+
+type arg int
+
+func (in input) valToInterface(v sqlparser.ValExpr) interface{} {
+	switch x := v.(type) {
+	case *sqlparser.ColName:
+		return string(x.Name)
+	case sqlparser.ValArg:
+		defer func() { in.argCursor++ }()
+		return arg(in.argCursor)
+	case sqlparser.StrVal:
+		return string(x)
+	case sqlparser.NumVal:
+		s := string(x)
+		n, err := strconv.Atoi(s)
+		if err == nil {
+			return n
+		}
+		f, err := strconv.ParseFloat(s, 64)
+		if err == nil {
+			return f
+		}
+	default:
+		//panic(x)
+	}
+	return nil
 }

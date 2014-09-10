@@ -5,6 +5,7 @@ import (
 	// "database/sql"
 	// "database/sql/driver"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/youtube/vitess/go/vt/sqlparser"
 )
 
@@ -14,8 +15,8 @@ type cond interface {
 
 type condchain []cond
 
-func (chain *condchain) matches(in input) bool {
-	for _, c := range *chain {
+func (chain condchain) matches(in input) bool {
+	for _, c := range chain {
 		if !c.matches(in) {
 			return false
 		}
@@ -27,7 +28,7 @@ type selectCond struct {
 	cols []string
 }
 
-func (sc *selectCond) matches(in input) bool {
+func (sc selectCond) matches(in input) bool {
 	_, ok := in.statement.(*sqlparser.Select)
 	if !ok {
 		return false
@@ -45,7 +46,7 @@ type tableCond struct {
 	table string
 }
 
-func (tc *tableCond) matches(in input) bool {
+func (tc tableCond) matches(in input) bool {
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
 		for _, tex := range x.From {
@@ -57,5 +58,15 @@ func (tc *tableCond) matches(in input) bool {
 			}
 		}
 	}
+	return false
+}
+
+type whereCond struct {
+	col string
+	v   interface{}
+}
+
+func (wc whereCond) matches(in input) bool {
+	spew.Dump(in.statement)
 	return false
 }

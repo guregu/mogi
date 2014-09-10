@@ -4,7 +4,7 @@ import (
 	"database/sql/driver"
 )
 
-type stub struct {
+type Stub struct {
 	chain condchain
 	cols  []string
 	data  [][]driver.Value
@@ -13,33 +13,46 @@ type stub struct {
 	resolve func(input)
 }
 
-func Select(cols ...string) *stub {
-	return &stub{
-		chain: condchain{&selectCond{
+func Select(cols ...string) *Stub {
+	return &Stub{
+		chain: condchain{selectCond{
 			cols: cols,
 		}},
 	}
 }
 
-func (s *stub) From(table string) *stub {
-	s.chain = append(s.chain, &tableCond{
+func (s *Stub) From(table string) *Stub {
+	s.chain = append(s.chain, tableCond{
 		table: table,
 	})
 	return s
 }
 
-func (s *stub) StubCSV(data string) {
+func (s *Stub) Where(col string, v interface{}) *Stub {
+	s.chain = append(s.chain, whereCond{
+		col: col,
+		v:   v,
+	})
+	return s
+}
+
+func (s *Stub) StubCSV(data string) {
 	s.resolve = func(in input) {
 		s.data = csvToValues(in.cols(), data)
 	}
 	addStub(s)
 }
 
-func (s *stub) matches(in input) bool {
+func (s *Stub) Stub(rows [][]driver.Value) {
+	s.data = rows
+	addStub(s)
+}
+
+func (s *Stub) matches(in input) bool {
 	return s.chain.matches(in)
 }
 
-func (s *stub) rows(in input) (*rows, error) {
+func (s *Stub) rows(in input) (*rows, error) {
 	switch {
 	case s.err != nil:
 		return nil, s.err
@@ -54,7 +67,7 @@ func (s *stub) rows(in input) (*rows, error) {
 }
 
 // stubs are arranged by how complex they are for now
-type stubs []*stub
+type stubs []*Stub
 
 func (s stubs) Len() int           { return len(s) }
 func (s stubs) Less(i, j int) bool { return len(s[i].chain) < len(s[j].chain) }

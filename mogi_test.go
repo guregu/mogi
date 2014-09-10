@@ -39,6 +39,7 @@ type beer struct {
 
 func TestMogi(t *testing.T) {
 	defer mogi.Reset()
+	mogi.Verbose(false)
 	db := openDB()
 
 	// select (any columns)
@@ -59,7 +60,22 @@ func TestMogi(t *testing.T) {
 	// select the "wrong" columns
 	mogi.Reset()
 	mogi.Select("hello", "👞").From("beer").StubCSV(beerCSV)
-	_, err = db.Query("SELECT id, name, brewery, pct FROM beer WHERE pct > ?", 5)
+	runUnstubbedSelect(t, db)
+
+	// select the wrong table
+	mogi.Reset()
+	mogi.Select("id", "name", "brewery", "pct").From("酒").StubCSV(beerCSV)
+	runUnstubbedSelect(t, db)
+
+	// where
+	mogi.Reset()
+	mogi.Select().Where("pct", 5).StubCSV(beerCSV)
+	db.Query("SELECT id, name, brewery, pct FROM beer WHERE a = ? AND b = ? AND c IS NULL", 5)
+	//runBeerSelectQuery(t, db)
+}
+
+func runUnstubbedSelect(t *testing.T, db *sql.DB) {
+	_, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE pct > ?", 5)
 	if err != mogi.ErrUnstubbed {
 		t.Error("with unmatched query, err should be ErrUnstubbed but is", err)
 	}
@@ -81,10 +97,6 @@ func runBeerSelectQuery(t *testing.T, db *sql.DB) {
 		checkBeer(t, b, i+1)
 		i++
 	}
-}
-
-func TestReset(t *testing.T) {
-
 }
 
 func checkBeer(t *testing.T, b beer, id int) {

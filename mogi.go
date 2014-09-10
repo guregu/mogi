@@ -11,6 +11,10 @@ var (
 	ErrUnresolved = errors.New("query matched but no stub data")
 )
 
+var (
+	verbose = false
+)
+
 func init() {
 	drv = newDriver()
 	sql.Register("mogi", drv)
@@ -19,6 +23,11 @@ func init() {
 // Reset removes all the stubs that have been set
 func Reset() {
 	drv.conn.stubs = nil
+}
+
+// Verbose turns on unstubbed logging when v is true
+func Verbose(v bool) {
+	verbose = v
 }
 
 // func Replace() {

@@ -15,7 +15,7 @@ func newConn() *conn {
 	return &conn{}
 }
 
-func addStub(s *stub) {
+func addStub(s *Stub) {
 	drv.conn.stubs = append(drv.conn.stubs, s)
 	sort.Sort(drv.conn.stubs)
 }
@@ -43,7 +43,9 @@ func (c *conn) Query(query string, args []driver.Value) (driver.Rows, error) {
 		}
 	}
 	// TODO verbose flag
-	log.Println("Unstubbed query", query, args)
+	if verbose {
+		log.Println("Unstubbed query", query, args)
+	}
 	return nil, ErrUnstubbed
 }
 
