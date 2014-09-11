@@ -32,7 +32,7 @@ mogi.Select().From("beer").StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
 
 // Filter by WHERE clause params
 mogi.Select().Where("id", 10).StubCSV(`10,Apex,Bear Republic Brewing Co.,8.95`)
-mogi.Select().Where("id", 42).StubCSV(`10,Westvleteren XII,Brouwerij Westvleteren,10.2`)
+mogi.Select().Where("id", 42).StubCSV(`42,Westvleteren XII,Brouwerij Westvleteren,10.2`)
 rows, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 10)
 ...
 rows, err = db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 42)
