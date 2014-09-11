@@ -1,4 +1,4 @@
-## mogi [![GoDoc](https://godoc.org/github.com/guregu/mogi?status.svg)](https://godoc.org/github.com/guregu/mogi) [![Coverage](http://gocover.io/_badge/github.com/guregu/mogi)](http://gocover.io/github.com/guregu/mogi)
+## mogi [![GoDoc](https://godoc.org/github.com/guregu/mogi?status.svg)](https://godoc.org/github.com/guregu/mogi) [![Coverage](http://gocover.io/_badge/github.com/guregu/mogi?)](http://gocover.io/github.com/guregu/mogi)
 `import "github.com/guregu/mogi"`
 
 mogi is a fancy SQL mocking/stubbing library for Go. It uses the [vitess](https://github.com/youtube/vitess) SQL parser for maximum happiness. 
@@ -37,6 +37,13 @@ rows, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 10
 ...
 rows, err = db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 42)
 ...
+
+// Filter by args given 
+mogi.Select().Args(1).StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
+rows, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 1)
+
+// Chain filters as much as you'd like
+mogi.Select("id", "name", "brewery", "pct").From("beer").Where("id", 1).StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
 ```
 
 ### License

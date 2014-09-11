@@ -39,6 +39,12 @@ func (s *Stub) Where(col string, v interface{}) *Stub {
 	return s
 }
 
+// Args further filters this stub, matching based on the args passed to the query
+func (s *Stub) Args(args ...driver.Value) *Stub {
+	s.chain = append(s.chain, argsCond{args})
+	return s
+}
+
 // StubCSV takes CSV data and registers this stub with the driver
 func (s *Stub) StubCSV(data string) {
 	s.resolve = func(in input) {

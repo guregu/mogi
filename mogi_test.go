@@ -98,6 +98,20 @@ func TestSelectWhere(t *testing.T) {
 	runUnstubbedSelect(t, db)
 }
 
+func TestSelectArgs(t *testing.T) {
+	defer mogi.Reset()
+	db := openDB()
+
+	// where
+	mogi.Select().Args(5).StubCSV(beerCSV)
+	runBeerSelectQuery(t, db)
+
+	// wrong args
+	mogi.Reset()
+	mogi.Select().Args("サービス残業").StubCSV(beerCSV)
+	runUnstubbedSelect(t, db)
+}
+
 func runUnstubbedSelect(t *testing.T, db *sql.DB) {
 	_, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE pct > ?", 5)
 	if err != mogi.ErrUnstubbed {
