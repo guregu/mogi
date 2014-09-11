@@ -59,6 +59,12 @@ func (s *Stub) Stub(rows [][]driver.Value) {
 	addStub(s)
 }
 
+// StubError registers this stub to return the given error
+func (s *Stub) StubError(err error) {
+	s.err = err
+	addStub(s)
+}
+
 func (s *Stub) matches(in input) bool {
 	return s.chain.matches(in)
 }

@@ -112,6 +112,17 @@ func TestSelectArgs(t *testing.T) {
 	runUnstubbedSelect(t, db)
 }
 
+func TestStubError(t *testing.T) {
+	defer mogi.Reset()
+	db := openDB()
+
+	mogi.Select().StubError(sql.ErrNoRows)
+	_, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE pct > ?", 5)
+	if err != sql.ErrNoRows {
+		t.Error("after StubError, err should be ErrNoRows but is", err)
+	}
+}
+
 func runUnstubbedSelect(t *testing.T, db *sql.DB) {
 	_, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE pct > ?", 5)
 	if err != mogi.ErrUnstubbed {

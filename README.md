@@ -38,6 +38,10 @@ rows, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 10
 rows, err = db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 42)
 ...
 
+// Stub an error while you're at it
+mogi.Select().Where("id", 3).StubError(sql.ErrNoRows)
+// FYI, unstubbed queries will return mogi.ErrUnstubbed
+
 // Filter by args given 
 mogi.Select().Args(1).StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
 rows, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 1)
