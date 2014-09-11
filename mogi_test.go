@@ -2,6 +2,7 @@ package mogi_test
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"reflect"
 	"testing"
 
@@ -43,7 +44,13 @@ func TestMogi(t *testing.T) {
 	db := openDB()
 
 	// select (any columns)
-	mogi.Select().From("beer").StubCSV(beerCSV)
+	mogi.Select().StubCSV(beerCSV)
+	runBeerSelectQuery(t, db)
+
+	// test .Stub()
+	mogi.Select().Stub([][]driver.Value{
+		{1, "Yona Yona Ale", "Yo-Ho Brewing", 5.5},
+		{2, "Punk IPA", "BrewDog", 5.6}})
 	runBeerSelectQuery(t, db)
 
 	// test reset
@@ -54,21 +61,34 @@ func TestMogi(t *testing.T) {
 	}
 
 	// select specific columns
-	mogi.Select("id", "name", "brewery", "pct").From("beer").StubCSV(beerCSV)
+	mogi.Select("id", "name", "brewery", "pct").StubCSV(beerCSV)
 	runBeerSelectQuery(t, db)
 
 	// select the "wrong" columns
 	mogi.Reset()
-	mogi.Select("hello", "👞").From("beer").StubCSV(beerCSV)
+	mogi.Select("hello", "👞").StubCSV(beerCSV)
 	runUnstubbedSelect(t, db)
+}
+
+func TestSelectTable(t *testing.T) {
+	defer mogi.Reset()
+	db := openDB()
+
+	// filter by table
+	mogi.Select("id", "name", "brewery", "pct").From("beer").StubCSV(beerCSV)
+	runBeerSelectQuery(t, db)
 
 	// select the wrong table
 	mogi.Reset()
 	mogi.Select("id", "name", "brewery", "pct").From("酒").StubCSV(beerCSV)
 	runUnstubbedSelect(t, db)
+}
+
+func TestSelectWhere(t *testing.T) {
+	defer mogi.Reset()
+	db := openDB()
 
 	// where
-	mogi.Reset()
 	mogi.Select().From("beer").Where("pct", 5).StubCSV(beerCSV)
 	runBeerSelectQuery(t, db)
 

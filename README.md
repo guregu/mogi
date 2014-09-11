@@ -1,0 +1,35 @@
+## mogi [![GoDoc](https://godoc.org/github.com/guregu/mogi?status.svg)](https://godoc.org/github.com/guregu/mogi) [![Coverage](http://gocover.io/_badge/github.com/guregu/mogi)](http://gocover.io/github.com/guregu/mogi)
+`import "github.com/guregu/mogi"`
+
+mogi is a fancy SQL mocking/stubbing library for Go. It uses the [vitess](https://github.com/youtube/vitess) SQL parser for maximum happiness. 
+
+It's not finished yet. Complex queries will break it. Stay tuned! 
+
+### Usage
+
+#### Getting started
+```go
+import 	"github.com/guregu/mogi"
+db, _ := sql.Open("mogi", "")
+```
+
+#### Stubbing SELECT queries
+```go
+// Stub any SELECT query
+mogi.Select().StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
+rows, err := db.Query("SELECT id, name, brewery, pct FROM beer", 5)
+
+// Reset to clear all stubs
+mogi.Reset()
+
+// Stub SELECT queries by columns selected
+mogi.Select("id", "name", "brewery", "pct").StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
+// You can stub with driver.Values instead of CSV
+mogi.Select("id", "deleted_at").Stub([][]driver.Value{{1, nil}})
+
+// Filter by table name
+mogi.Select().From("beer").StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
+```
+
+### License
+BSD

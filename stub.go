@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 )
 
+// Stub is a SQL stub
 type Stub struct {
 	chain condchain
 	cols  []string
@@ -13,6 +14,9 @@ type Stub struct {
 	resolve func(input)
 }
 
+// Select starts a new stub for SELECT statements.
+// You can filter out which columns to stub for.
+// If you don't pass any columns, it will stub all SELECT queries.
 func Select(cols ...string) *Stub {
 	return &Stub{
 		chain: condchain{selectCond{
@@ -21,6 +25,7 @@ func Select(cols ...string) *Stub {
 	}
 }
 
+// From further filters this stub by table name
 func (s *Stub) From(table string) *Stub {
 	s.chain = append(s.chain, tableCond{
 		table: table,
@@ -28,6 +33,7 @@ func (s *Stub) From(table string) *Stub {
 	return s
 }
 
+// Where further filters this stub by values of input in the WHERE clause
 func (s *Stub) Where(col string, v interface{}) *Stub {
 	s.chain = append(s.chain, newWhereCond(col, v))
 	return s
