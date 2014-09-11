@@ -39,6 +39,7 @@ func (s *Stub) Where(col string, v interface{}) *Stub {
 	return s
 }
 
+// StubCSV takes CSV data and registers this stub with the driver
 func (s *Stub) StubCSV(data string) {
 	s.resolve = func(in input) {
 		s.data = csvToValues(in.cols(), data)
@@ -46,6 +47,7 @@ func (s *Stub) StubCSV(data string) {
 	addStub(s)
 }
 
+// Stub takes row data and registers this stub with the driver
 func (s *Stub) Stub(rows [][]driver.Value) {
 	s.data = rows
 	addStub(s)
