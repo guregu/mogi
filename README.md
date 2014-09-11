@@ -17,7 +17,7 @@ db, _ := sql.Open("mogi", "")
 ```go
 // Stub any SELECT query
 mogi.Select().StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
-rows, err := db.Query("SELECT id, name, brewery, pct FROM beer", 5)
+rows, err := db.Query("SELECT id, name, brewery, pct FROM beer")
 
 // Reset to clear all stubs
 mogi.Reset()
@@ -29,6 +29,14 @@ mogi.Select("id", "deleted_at").Stub([][]driver.Value{{1, nil}})
 
 // Filter by table name
 mogi.Select().From("beer").StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
+
+// Filter by WHERE clause params
+mogi.Select().Where("id", 10).StubCSV(`10,Apex,Bear Republic Brewing Co.,8.95`)
+mogi.Select().Where("id", 42).StubCSV(`10,Westvleteren XII,Brouwerij Westvleteren,10.2`)
+rows, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 10)
+...
+rows, err = db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 42)
+...
 ```
 
 ### License
