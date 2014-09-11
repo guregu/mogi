@@ -29,10 +29,7 @@ func (s *Stub) From(table string) *Stub {
 }
 
 func (s *Stub) Where(col string, v interface{}) *Stub {
-	s.chain = append(s.chain, whereCond{
-		col: col,
-		v:   v,
-	})
+	s.chain = append(s.chain, newWhereCond(col, v))
 	return s
 }
 

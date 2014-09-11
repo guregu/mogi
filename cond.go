@@ -5,7 +5,6 @@ import (
 	// "database/sql"
 	// "database/sql/driver"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/youtube/vitess/go/vt/sqlparser"
 )
 
@@ -66,7 +65,25 @@ type whereCond struct {
 	v   interface{}
 }
 
+func newWhereCond(col string, v interface{}) whereCond {
+	cmp := v
+	// convert args to their 64-bit versions
+	// for easy comparisons
+	switch x := v.(type) {
+	case int:
+		cmp = int64(x)
+	case int32:
+		cmp = int64(x)
+	case float32:
+		cmp = float64(x)
+	}
+	return whereCond{
+		col: col,
+		v:   cmp,
+	}
+}
+
 func (wc whereCond) matches(in input) bool {
-	spew.Dump(in.statement)
-	return false
+	vals := in.where()
+	return reflect.DeepEqual(vals[wc.col], wc.v)
 }

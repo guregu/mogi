@@ -12,6 +12,7 @@ type input struct {
 	statement sqlparser.Statement
 	args      []driver.Value
 
+	whereVars map[string]interface{}
 	argCursor int
 }
 
@@ -44,10 +45,20 @@ func (in input) cols() []string {
 }
 
 func (in input) where() map[string]interface{} {
+	if in.whereVars != nil {
+		return in.whereVars
+	}
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
-		vals := in.extract(nil, x.Where.Expr)
-		return vals
+		in.whereVars = in.extract(nil, x.Where.Expr)
+
+		// replace placeholders
+		for k, v := range in.whereVars {
+			if a, ok := v.(arg); ok {
+				in.whereVars[k] = in.args[int(a)]
+			}
+		}
+		return in.whereVars
 	}
 	return nil
 }

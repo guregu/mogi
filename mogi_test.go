@@ -69,9 +69,13 @@ func TestMogi(t *testing.T) {
 
 	// where
 	mogi.Reset()
-	mogi.Select().Where("pct", 5).StubCSV(beerCSV)
-	db.Query("SELECT id, name, brewery, pct FROM beer WHERE a = ? AND b = ? AND c IS NULL", 5)
-	//runBeerSelectQuery(t, db)
+	mogi.Select().From("beer").Where("pct", 5).StubCSV(beerCSV)
+	runBeerSelectQuery(t, db)
+
+	// wrong where
+	mogi.Reset()
+	mogi.Select().From("beer").Where("pct", 98).StubCSV(beerCSV)
+	runUnstubbedSelect(t, db)
 }
 
 func runUnstubbedSelect(t *testing.T, db *sql.DB) {
