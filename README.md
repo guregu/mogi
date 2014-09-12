@@ -24,7 +24,7 @@ mogi.Reset()
 
 // Stub SELECT queries by columns selected
 mogi.Select("id", "name", "brewery", "pct").StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
-// Aliased columns should be given as they are aliases.
+// Aliased columns should be given as they are aliased.
 // Qualified columns should be given as they are qualified. 
 // e.g. SELECT beer.name AS n, breweries.founded FROM beer JOIN breweries ON beer.brewery = breweries.name
 mogi.Select("n", "breweries.founded").StubCSV(`Stone IPA,1996`)
