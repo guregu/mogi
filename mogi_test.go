@@ -123,6 +123,40 @@ func TestStubError(t *testing.T) {
 	}
 }
 
+func TestMultipleTables(t *testing.T) {
+	defer mogi.Reset()
+	db := openDB()
+
+	mogi.Select().From("a", "b").StubCSV(`foo,bar`)
+	_, err := db.Query("SELECT a.thing, b.thing FROM a, b WHERE a.id = b.id")
+	checkNil(t, err)
+	_, err = db.Query("SELECT a.thing, b.thing FROM a JOIN b ON a.id = b.id")
+	checkNil(t, err)
+
+	mogi.Reset()
+	mogi.Select().From("a", "b", "c").StubCSV(`foo,bar,baz`)
+	_, err = db.Query("SELECT a.thing, b.thing, c.thing FROM a, b, c WHERE a.id = b.id")
+	checkNil(t, err)
+	_, err = db.Query("SELECT a.thing, b.thing, c.thing FROM a JOIN b ON a.id = b.id JOIN c ON a.id = c.id")
+	checkNil(t, err)
+}
+
+func TestColumnNames(t *testing.T) {
+	defer mogi.Reset()
+	db := openDB()
+
+	// qualified names
+	mogi.Select("a.thing", "b.thing", "c.thing").From("qqqq", "b", "c").StubCSV(`foo,bar,baz`)
+	_, err := db.Query("SELECT a.thing, b.thing, c.thing FROM qqqq as a, b, c WHERE a.id = b.id")
+	checkNil(t, err)
+
+	// aliased names
+	mogi.Reset()
+	mogi.Select("dog", "cat", "hamster").From("a", "b", "c").StubCSV(`foo,bar,baz`)
+	_, err = db.Query("SELECT a.thing AS dog, b.thing AS cat, c.thing AS hamster FROM a JOIN b ON a.id = b.id JOIN c ON a.id = c.id")
+	checkNil(t, err)
+}
+
 func runUnstubbedSelect(t *testing.T, db *sql.DB) {
 	_, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE pct > ?", 5)
 	if err != mogi.ErrUnstubbed {

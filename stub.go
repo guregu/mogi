@@ -25,10 +25,11 @@ func Select(cols ...string) *Stub {
 	}
 }
 
-// From further filters this stub by table name
-func (s *Stub) From(table string) *Stub {
+// From further filters this stub by table names in the FROM and JOIN clauses (in order).
+// You need to give it the un-aliased table names.
+func (s *Stub) From(tables ...string) *Stub {
 	s.chain = append(s.chain, tableCond{
-		table: table,
+		tables: tables,
 	})
 	return s
 }

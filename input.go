@@ -2,8 +2,10 @@ package mogi
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"strconv"
 
+	// "github.com/davecgh/go-spew/spew"
 	"github.com/youtube/vitess/go/vt/sqlparser"
 )
 
@@ -25,6 +27,12 @@ func newInput(query string, args []driver.Value) (in input, err error) {
 	return
 }
 
+/*
+Column name rules:
+SELECT a        → a
+SELECT a.b      → a.b
+SELECT a.b AS c → c
+*/
 func (in input) cols() []string {
 	var cols []string
 	switch x := in.statement.(type) {
@@ -38,7 +46,14 @@ func (in input) cols() []string {
 			if !ok {
 				panic(colname)
 			}
-			cols = append(cols, string(colname.Name))
+			name := string(colname.Name)
+			switch {
+			case nse.As != nil:
+				name = string(nse.As)
+			case colname.Qualifier != nil:
+				name = fmt.Sprintf("%s.%s", colname.Qualifier, colname.Name)
+			}
+			cols = append(cols, name)
 		}
 	}
 	return cols

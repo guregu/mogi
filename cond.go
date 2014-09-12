@@ -43,22 +43,30 @@ func (sc selectCond) matches(in input) bool {
 }
 
 type tableCond struct {
-	table string
+	tables []string
 }
 
 func (tc tableCond) matches(in input) bool {
+	var inTables []string
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
 		for _, tex := range x.From {
-			table_expr := tex.(*sqlparser.AliasedTableExpr)
-			if tn, ok := table_expr.Expr.(*sqlparser.TableName); ok {
-				if tc.table == string(tn.Name) {
-					return true
-				}
-			}
+			extractTableNames(&inTables, tex)
 		}
 	}
-	return false
+	return reflect.DeepEqual(tc.tables, inTables)
+}
+
+func extractTableNames(tables *[]string, from sqlparser.TableExpr) {
+	switch x := from.(type) {
+	case *sqlparser.AliasedTableExpr:
+		if name, ok := x.Expr.(*sqlparser.TableName); ok {
+			*tables = append(*tables, string(name.Name))
+		}
+	case *sqlparser.JoinTableExpr:
+		extractTableNames(tables, x.LeftExpr)
+		extractTableNames(tables, x.RightExpr)
+	}
 }
 
 type whereCond struct {

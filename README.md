@@ -1,4 +1,4 @@
-## mogi [![GoDoc](https://godoc.org/github.com/guregu/mogi?status.svg)](https://godoc.org/github.com/guregu/mogi) [![Coverage](http://gocover.io/_badge/github.com/guregu/mogi?)](http://gocover.io/github.com/guregu/mogi)
+## mogi [![GoDoc](https://godoc.org/github.com/guregu/mogi?status.svg)](https://godoc.org/github.com/guregu/mogi) [![Coverage](http://gocover.io/_badge/github.com/guregu/mogi)](http://gocover.io/github.com/guregu/mogi)
 `import "github.com/guregu/mogi"`
 
 mogi is a fancy SQL mocking/stubbing library for Go. It uses the [vitess](https://github.com/youtube/vitess) SQL parser for maximum happiness. 
@@ -24,11 +24,21 @@ mogi.Reset()
 
 // Stub SELECT queries by columns selected
 mogi.Select("id", "name", "brewery", "pct").StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
+// Aliased columns should be given as they are aliases.
+// Qualified columns should be given as they are qualified. 
+// e.g. SELECT beer.name AS n, breweries.founded FROM beer JOIN breweries ON beer.brewery = breweries.name
+mogi.Select("n", "breweries.founded").StubCSV(`Stone IPA,1996`)
+
 // You can stub with driver.Values instead of CSV
 mogi.Select("id", "deleted_at").Stub([][]driver.Value{{1, nil}})
 
 // Filter by table name
 mogi.Select().From("beer").StubCSV(`1,Yona Yona Ale,Yo-Ho Brewing,5.5`)
+
+// You can supply multiple table names for JOIN queries
+// e.g. SELECT beer.name, wine.name FROM beer JOIN wine ON beer.pct = wine.pct
+// or   SELECT beer.name, wine.name FROM beer, wine WHERE beer.pct = wine.pct
+mogi.Select().From("beer", "wine").StubCSV(`Westvleteren XII,Across the Pond Riesling`)
 
 // Filter by WHERE clause params
 mogi.Select().Where("id", 10).StubCSV(`10,Apex,Bear Republic Brewing Co.,8.95`)
