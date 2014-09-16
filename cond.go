@@ -73,18 +73,6 @@ func (tc tableCond) matches(in input) bool {
 	return false
 }
 
-func extractTableNames(tables *[]string, from sqlparser.TableExpr) {
-	switch x := from.(type) {
-	case *sqlparser.AliasedTableExpr:
-		if name, ok := x.Expr.(*sqlparser.TableName); ok {
-			*tables = append(*tables, string(name.Name))
-		}
-	case *sqlparser.JoinTableExpr:
-		extractTableNames(tables, x.LeftExpr)
-		extractTableNames(tables, x.RightExpr)
-	}
-}
-
 type whereCond struct {
 	col string
 	v   interface{}
@@ -148,35 +136,42 @@ func newValueCond(row int, col string, v interface{}) valueCond {
 }
 
 func (vc valueCond) matches(in input) bool {
-	values := in.values()
-	if vc.row > len(values)-1 {
-		return false
+	switch in.statement.(type) {
+	case *sqlparser.Insert:
+		values := in.rows()
+		if vc.row > len(values)-1 {
+			return false
+		}
+		v, ok := values[vc.row][vc.col]
+		if !ok {
+			return false
+		}
+		return reflect.DeepEqual(vc.v, v)
+	case *sqlparser.Update:
+		values := in.values()
+		v, ok := values[vc.col]
+		if !ok {
+			return false
+		}
+		return reflect.DeepEqual(vc.v, v)
 	}
+	return false
+}
 
-	v, ok := values[vc.row][vc.col]
+type updateCond struct {
+	cols []string
+}
+
+func (uc updateCond) matches(in input) bool {
+	_, ok := in.statement.(*sqlparser.Update)
 	if !ok {
 		return false
 	}
-	return reflect.DeepEqual(vc.v, v)
-}
 
-func unifyArray(arr []driver.Value) []driver.Value {
-	for i, v := range arr {
-		arr[i] = unify(v)
+	// zero parameters means anything
+	if len(uc.cols) == 0 {
+		return true
 	}
-	return arr
-}
 
-// convert args to their 64-bit versions
-// for easy comparisons
-func unify(v interface{}) interface{} {
-	switch x := v.(type) {
-	case int:
-		return int64(x)
-	case int32:
-		return int64(x)
-	case float32:
-		return float64(x)
-	}
-	return v
+	return reflect.DeepEqual(uc.cols, in.cols())
 }

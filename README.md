@@ -74,6 +74,9 @@ mogi.Insert().StubResult(-1, 1)
 mogi.Insert("name", "brewery", "pct").StubResult(1, 1)
 result, err := db.Exec("INSERT INTO beer (name, brewery, pct) VALUES (?, ?, ?)", "Yona Yona Ale", "Yo-Ho Brewing", 5.5)
 
+// Filter by the table used in the query
+mogi.Insert().Into("beer").StubResult(1, 1)
+
 // Filter by the args passed to the query (the things replacing the ?s)
 mogi.Insert().Args("Yona Yona Ale", "Yo-Ho Brewing", 5.5).StubResult(1, 1)
 
@@ -89,6 +92,34 @@ result, err = db.Exec(`INSERT INTO beer (name, brewery, pct) VALUES (?, "Mikkell
 	"Mikkel’s Dream",
 	"Tokyo*", "BrewDog", 18.2,
 )
+```
+
+#### Stubbing UPDATE queries
+```go
+// Stub any UPDATE query
+// UPDATE stubs work the same as INSERT stubs
+// This stubs all UPDATE queries to return 10 rows affected
+mogi.Update().StubResult(-1, 10)
+// This does the same thing
+mogi.Update().StubRowsAffected(10)
+
+// Filter by the columns used in the SET clause
+mogi.Update("name", "brewery", "pct").StubRowsAffected(1)
+_, err := db.Exec(`UPDATE beer
+				   SET name = "Mikkel’s Dream", brewery = "Mikkeller", pct = 4.6
+				   WHERE id = ? AND moon = ?`, 3, "full")
+
+// Filter by values set by the SET clause
+mogi.Update().Value("name", "Mikkel’s Dream").Value("brewery", "Mikkeller").StubRowsAffected(1)
+
+// Filter by args (? placeholder values)
+mogi.Update().Args(3, "full").StubRowsAffected(1)
+
+// Filter by the table being updated
+mogi.Update().Table("beer").StubRowsAffected(1)
+
+// Filter by WHERE clause params
+mogi.Update().Where("id", 3).Where("moon", "full").StubRowsAffected(1)
 ```
 
 ### License

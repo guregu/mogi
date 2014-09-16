@@ -22,6 +22,17 @@ func Insert(cols ...string) *ExecStub {
 	}
 }
 
+// Select starts a new stub for UPDATE statements.
+// You can filter out which columns (from the SET statement) this stub is for.
+// If you don't pass any columns, it will stub all UPDATE queries.
+func Update(cols ...string) *ExecStub {
+	return &ExecStub{
+		chain: condchain{updateCond{
+			cols: cols,
+		}},
+	}
+}
+
 // Into further filters this stub, matching the target table in INSERT or UPDATEs.
 func (s *ExecStub) Table(table string) *ExecStub {
 	s.chain = append(s.chain, tableCond{
@@ -36,7 +47,8 @@ func (s *ExecStub) Into(table string) *ExecStub {
 }
 
 // Value further filters this stub, matching based on values supplied to the query
-// It matches the first row of values, so it is a shortcut for ValueAt(0, ...)
+// For INSERTs, it matches the first row of values, so it is a shortcut for ValueAt(0, ...)
+// For UPDATEs, it matches on the SET clause.
 func (s *ExecStub) Value(col string, v interface{}) *ExecStub {
 	s.ValueAt(0, col, v)
 	return s
@@ -45,6 +57,12 @@ func (s *ExecStub) Value(col string, v interface{}) *ExecStub {
 // ValueAt further filters this stub, matching based on values supplied to the query
 func (s *ExecStub) ValueAt(row int, col string, v interface{}) *ExecStub {
 	s.chain = append(s.chain, newValueCond(row, col, v))
+	return s
+}
+
+// Where further filters this stub by values of input in the WHERE clause
+func (s *ExecStub) Where(col string, v interface{}) *ExecStub {
+	s.chain = append(s.chain, newWhereCond(col, v))
 	return s
 }
 
@@ -68,6 +86,11 @@ func (s *ExecStub) StubResult(lastInsertID, rowsAffected int64) {
 		rowsAffected: rowsAffected,
 	}
 	addExecStub(s)
+}
+
+// StubRowsAffected is an easy way to stub a driver.Result when you only need to specify the rows affected.
+func (s *ExecStub) StubRowsAffected(rowsAffected int64) {
+	s.StubResult(-1, rowsAffected)
 }
 
 // Stub takes an error and registers this stub with the driver

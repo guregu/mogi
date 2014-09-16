@@ -2,9 +2,7 @@ package mogi
 
 import (
 	"database/sql/driver"
-	"fmt"
 	"log"
-	"strconv"
 
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/youtube/vitess/go/vt/sqlparser"
@@ -18,6 +16,8 @@ type input struct {
 	whereVars map[string]interface{}
 	argCursor int
 }
+
+type arg int
 
 func newInput(query string, args []driver.Value) (in input, err error) {
 	in = input{
@@ -60,16 +60,41 @@ func (in input) cols() []string {
 			cols = append(cols, name)
 		}
 	case *sqlparser.Update:
-		// TODO
+		for _, expr := range x.Exprs {
+			// TODO qualifiers
+			name := string(expr.Name.Name)
+			cols = append(cols, name)
+		}
 	}
 	return cols
 }
 
-func (in input) values() []map[string]interface{} {
-	cols := in.cols()
-	argCursor := 0
+// for UPDATEs
+func (in input) values() map[string]interface{} {
+	vals := make(map[string]interface{})
 
+	switch x := in.statement.(type) {
+	case *sqlparser.Update:
+		for _, expr := range x.Exprs {
+			// TODO qualifiers
+			colName := string(expr.Name.Name)
+			v := valToInterface(expr.Expr)
+			if a, ok := v.(arg); ok {
+				// replace placeholders
+				v = unify(in.args[int(a)])
+			}
+			vals[colName] = v
+		}
+	}
+
+	return vals
+}
+
+// for INSERTs
+func (in input) rows() []map[string]interface{} {
 	var vals []map[string]interface{}
+	cols := in.cols()
+
 	switch x := in.statement.(type) {
 	case *sqlparser.Insert:
 		insertRows := x.Rows.(sqlparser.Values)
@@ -79,10 +104,10 @@ func (in input) values() []map[string]interface{} {
 			row := rowTuple.(sqlparser.ValTuple)
 			for j, val := range row {
 				colName := cols[j]
-				v := valToInterface(&argCursor, val)
+				v := valToInterface(val)
 				if a, ok := v.(arg); ok {
 					// replace placeholders
-					v = in.args[int(a)]
+					v = unify(in.args[int(a)])
 				}
 				vals[i][colName] = v
 			}
@@ -92,80 +117,29 @@ func (in input) values() []map[string]interface{} {
 }
 
 func (in input) where() map[string]interface{} {
-	argCursor := 0
-
 	if in.whereVars != nil {
 		return in.whereVars
 	}
+
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
-		in.whereVars = extractBoolExpr(nil, &argCursor, x.Where.Expr)
-
+		in.whereVars = extractBoolExpr(nil, x.Where.Expr)
 		// replace placeholders
 		for k, v := range in.whereVars {
 			if a, ok := v.(arg); ok {
-				in.whereVars[k] = in.args[int(a)]
+				in.whereVars[k] = unify(in.args[int(a)])
+			}
+		}
+		return in.whereVars
+	case *sqlparser.Update:
+		in.whereVars = extractBoolExpr(nil, x.Where.Expr)
+		// replace placeholders
+		for k, v := range in.whereVars {
+			if a, ok := v.(arg); ok {
+				in.whereVars[k] = unify(in.args[int(a)])
 			}
 		}
 		return in.whereVars
 	}
 	return nil
-}
-
-func extractBoolExpr(vals map[string]interface{}, cursor *int, expr sqlparser.BoolExpr) map[string]interface{} {
-	if vals == nil {
-		vals = make(map[string]interface{})
-	}
-	switch x := expr.(type) {
-	case *sqlparser.AndExpr:
-		extractBoolExpr(vals, cursor, x.Left)
-		extractBoolExpr(vals, cursor, x.Right)
-	case *sqlparser.ComparisonExpr:
-		column := valToInterface(cursor, x.Left).(string)
-		vals[column] = valToInterface(cursor, x.Right)
-	}
-	return vals
-}
-
-type arg int
-
-func valToInterface(cursor *int, v sqlparser.ValExpr) interface{} {
-	switch x := v.(type) {
-	case *sqlparser.ColName:
-		return string(x.Name)
-	case sqlparser.ValArg:
-		defer func() { *cursor = *cursor + 1 }()
-		return arg(*cursor)
-	case sqlparser.StrVal:
-		return string(x)
-	case sqlparser.NumVal:
-		s := string(x)
-		n, err := strconv.Atoi(s)
-		if err == nil {
-			return n
-		}
-		f, err := strconv.ParseFloat(s, 64)
-		if err == nil {
-			return f
-		}
-	default:
-		//panic(x)
-	}
-	return nil
-}
-
-func extractColumnName(nse *sqlparser.NonStarExpr) string {
-	colname, ok := nse.Expr.(*sqlparser.ColName)
-	if !ok {
-		log.Println("something other than ColName", nse.Expr)
-		panic(colname)
-	}
-	name := string(colname.Name)
-	switch {
-	case nse.As != nil:
-		name = string(nse.As)
-	case colname.Qualifier != nil:
-		name = fmt.Sprintf("%s.%s", colname.Qualifier, colname.Name)
-	}
-	return name
 }
