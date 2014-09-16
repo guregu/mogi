@@ -42,11 +42,11 @@ func (sc selectCond) matches(in input) bool {
 	return reflect.DeepEqual(sc.cols, in.cols())
 }
 
-type tableCond struct {
+type fromCond struct {
 	tables []string
 }
 
-func (tc tableCond) matches(in input) bool {
+func (fc fromCond) matches(in input) bool {
 	var inTables []string
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
@@ -54,7 +54,23 @@ func (tc tableCond) matches(in input) bool {
 			extractTableNames(&inTables, tex)
 		}
 	}
-	return reflect.DeepEqual(tc.tables, inTables)
+	return reflect.DeepEqual(fc.tables, inTables)
+}
+
+type tableCond struct {
+	table string
+}
+
+func (tc tableCond) matches(in input) bool {
+	switch x := in.statement.(type) {
+	case *sqlparser.Insert:
+		return tc.table == string(x.Table.Name)
+	case *sqlparser.Update:
+		return tc.table == string(x.Table.Name)
+	case *sqlparser.Delete:
+		return tc.table == string(x.Table.Name)
+	}
+	return false
 }
 
 func extractTableNames(tables *[]string, from sqlparser.TableExpr) {
@@ -83,7 +99,11 @@ func newWhereCond(col string, v interface{}) whereCond {
 
 func (wc whereCond) matches(in input) bool {
 	vals := in.where()
-	return reflect.DeepEqual(vals[wc.col], wc.v)
+	v, ok := vals[wc.col]
+	if !ok {
+		return false
+	}
+	return reflect.DeepEqual(wc.v, v)
 }
 
 type argsCond struct {
@@ -93,6 +113,51 @@ type argsCond struct {
 func (ac argsCond) matches(in input) bool {
 	given := unifyArray(ac.args)
 	return reflect.DeepEqual(given, in.args)
+}
+
+type insertCond struct {
+	cols []string
+}
+
+func (ic insertCond) matches(in input) bool {
+	_, ok := in.statement.(*sqlparser.Insert)
+	if !ok {
+		return false
+	}
+
+	// zero parameters means anything
+	if len(ic.cols) == 0 {
+		return true
+	}
+
+	return reflect.DeepEqual(ic.cols, in.cols())
+}
+
+type valueCond struct {
+	row int
+	col string
+	v   interface{}
+}
+
+func newValueCond(row int, col string, v interface{}) valueCond {
+	return valueCond{
+		row: row,
+		col: col,
+		v:   unify(v),
+	}
+}
+
+func (vc valueCond) matches(in input) bool {
+	values := in.values()
+	if vc.row > len(values)-1 {
+		return false
+	}
+
+	v, ok := values[vc.row][vc.col]
+	if !ok {
+		return false
+	}
+	return reflect.DeepEqual(vc.v, v)
 }
 
 func unifyArray(arr []driver.Value) []driver.Value {

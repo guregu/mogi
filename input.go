@@ -3,6 +3,7 @@ package mogi
 import (
 	"database/sql/driver"
 	"fmt"
+	"log"
 	"strconv"
 
 	// "github.com/davecgh/go-spew/spew"
@@ -35,37 +36,70 @@ SELECT a.b AS c → c
 */
 func (in input) cols() []string {
 	var cols []string
+	in.argCursor = 0
+
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
 		for _, sexpr := range x.SelectExprs {
 			nse, ok := sexpr.(*sqlparser.NonStarExpr)
 			if !ok {
+				log.Println("something other than NonStarExpr", sexpr)
 				continue
 			}
-			colname, ok := nse.Expr.(*sqlparser.ColName)
-			if !ok {
-				panic(colname)
-			}
-			name := string(colname.Name)
-			switch {
-			case nse.As != nil:
-				name = string(nse.As)
-			case colname.Qualifier != nil:
-				name = fmt.Sprintf("%s.%s", colname.Qualifier, colname.Name)
-			}
+			name := extractColumnName(nse)
 			cols = append(cols, name)
 		}
+	case *sqlparser.Insert:
+		for _, c := range x.Columns {
+			nse, ok := c.(*sqlparser.NonStarExpr)
+			if !ok {
+				log.Println("something other than NonStarExpr", c)
+				continue
+			}
+			name := extractColumnName(nse)
+			cols = append(cols, name)
+		}
+	case *sqlparser.Update:
+		// TODO
 	}
 	return cols
 }
 
+func (in input) values() []map[string]interface{} {
+	cols := in.cols()
+	argCursor := 0
+
+	var vals []map[string]interface{}
+	switch x := in.statement.(type) {
+	case *sqlparser.Insert:
+		insertRows := x.Rows.(sqlparser.Values)
+		vals = make([]map[string]interface{}, len(insertRows))
+		for i, rowTuple := range insertRows {
+			vals[i] = make(map[string]interface{})
+			row := rowTuple.(sqlparser.ValTuple)
+			for j, val := range row {
+				colName := cols[j]
+				v := valToInterface(&argCursor, val)
+				if a, ok := v.(arg); ok {
+					// replace placeholders
+					v = in.args[int(a)]
+				}
+				vals[i][colName] = v
+			}
+		}
+	}
+	return vals
+}
+
 func (in input) where() map[string]interface{} {
+	argCursor := 0
+
 	if in.whereVars != nil {
 		return in.whereVars
 	}
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
-		in.whereVars = in.extract(nil, x.Where.Expr)
+		in.whereVars = extractBoolExpr(nil, &argCursor, x.Where.Expr)
 
 		// replace placeholders
 		for k, v := range in.whereVars {
@@ -78,30 +112,30 @@ func (in input) where() map[string]interface{} {
 	return nil
 }
 
-func (in input) extract(vals map[string]interface{}, expr sqlparser.BoolExpr) map[string]interface{} {
+func extractBoolExpr(vals map[string]interface{}, cursor *int, expr sqlparser.BoolExpr) map[string]interface{} {
 	if vals == nil {
 		vals = make(map[string]interface{})
 	}
 	switch x := expr.(type) {
 	case *sqlparser.AndExpr:
-		in.extract(vals, x.Left)
-		in.extract(vals, x.Right)
+		extractBoolExpr(vals, cursor, x.Left)
+		extractBoolExpr(vals, cursor, x.Right)
 	case *sqlparser.ComparisonExpr:
-		column := in.valToInterface(x.Left).(string)
-		vals[column] = in.valToInterface(x.Right)
+		column := valToInterface(cursor, x.Left).(string)
+		vals[column] = valToInterface(cursor, x.Right)
 	}
 	return vals
 }
 
 type arg int
 
-func (in input) valToInterface(v sqlparser.ValExpr) interface{} {
+func valToInterface(cursor *int, v sqlparser.ValExpr) interface{} {
 	switch x := v.(type) {
 	case *sqlparser.ColName:
 		return string(x.Name)
 	case sqlparser.ValArg:
-		defer func() { in.argCursor++ }()
-		return arg(in.argCursor)
+		defer func() { *cursor = *cursor + 1 }()
+		return arg(*cursor)
 	case sqlparser.StrVal:
 		return string(x)
 	case sqlparser.NumVal:
@@ -118,4 +152,20 @@ func (in input) valToInterface(v sqlparser.ValExpr) interface{} {
 		//panic(x)
 	}
 	return nil
+}
+
+func extractColumnName(nse *sqlparser.NonStarExpr) string {
+	colname, ok := nse.Expr.(*sqlparser.ColName)
+	if !ok {
+		log.Println("something other than ColName", nse.Expr)
+		panic(colname)
+	}
+	name := string(colname.Name)
+	switch {
+	case nse.As != nil:
+		name = string(nse.As)
+	case colname.Qualifier != nil:
+		name = fmt.Sprintf("%s.%s", colname.Qualifier, colname.Name)
+	}
+	return name
 }

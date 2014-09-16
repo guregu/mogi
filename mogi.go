@@ -9,6 +9,8 @@ import (
 var (
 	ErrUnstubbed  = errors.New("query not stubbed")
 	ErrUnresolved = errors.New("query matched but no stub data")
+
+	errNotSet = errors.New("value set to -1")
 )
 
 var (
@@ -23,6 +25,7 @@ func init() {
 // Reset removes all the stubs that have been set
 func Reset() {
 	drv.conn.stubs = nil
+	drv.conn.execStubs = nil
 }
 
 // Verbose turns on unstubbed logging when v is true
