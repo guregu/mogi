@@ -79,11 +79,11 @@ mogi.Insert().Args("Yona Yona Ale", "Yo-Ho Brewing", 5.5).StubResult(1, 1)
 
 // Filter by the values used in the query
 mogi.Insert().Value("name", "Yona Yona Ale").Value("brewery", "Yo-Ho Brewing").StubResult(1, 1)
-// Use ValueN when you are inserting multiple rows. The first argument is the row #, starting with 0.
+// Use ValueAt when you are inserting multiple rows. The first argument is the row #, starting with 0.
 // Parameters are interpolated for you.
 mogi.Insert().
-	ValueN(0, "brewery", "Mikkeller").ValueN(0, "pct", 4.6).
-	ValueN(1, "brewery", "BrewDog").ValueN(1, "pct", 18.2).
+	ValueAt(0, "brewery", "Mikkeller").ValueAt(0, "pct", 4.6).
+	ValueAt(1, "brewery", "BrewDog").ValueAt(1, "pct", 18.2).
 	StubResult(4, 2)
 result, err = db.Exec(`INSERT INTO beer (name, brewery, pct) VALUES (?, "Mikkeller", 4.6), (?, ?, ?)`,
 	"Mikkel’s Dream",

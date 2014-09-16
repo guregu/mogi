@@ -261,8 +261,8 @@ func TestInsertValues(t *testing.T) {
 	// multiple rows
 	mogi.Reset()
 	mogi.Insert().
-		ValueN(0, "brewery", "Mikkeller").ValueN(0, "pct", 4.6).
-		ValueN(1, "brewery", "BrewDog").ValueN(1, "pct", 18.2).
+		ValueAt(0, "brewery", "Mikkeller").ValueAt(0, "pct", 4.6).
+		ValueAt(1, "brewery", "BrewDog").ValueAt(1, "pct", 18.2).
 		StubResult(4, 2)
 	_, err = db.Exec(`INSERT INTO beer (name, brewery, pct) VALUES (?, "Mikkeller", 4.6), (?, ?, ?)`,
 		"Mikkel’s Dream",
