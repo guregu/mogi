@@ -72,6 +72,11 @@ func (s *ExecStub) Args(args ...driver.Value) *ExecStub {
 	return s
 }
 
+func (s *ExecStub) Priority(p int) *ExecStub {
+	s.chain = append(s.chain, priorityCond{p})
+	return s
+}
+
 // Stub takes a driver.Result and registers this stub with the driver
 func (s *ExecStub) Stub(res driver.Result) {
 	s.result = res
@@ -108,11 +113,11 @@ func (s *ExecStub) results() (driver.Result, error) {
 }
 
 func (s *ExecStub) priority() int {
-	return len(s.chain)
+	return s.chain.priority()
 }
 
 type execStubs []*ExecStub
 
 func (s execStubs) Len() int           { return len(s) }
-func (s execStubs) Less(i, j int) bool { return s[i].priority() < s[j].priority() }
+func (s execStubs) Less(i, j int) bool { return s[i].priority() > s[j].priority() }
 func (s execStubs) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }

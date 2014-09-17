@@ -45,6 +45,12 @@ func (s *Stub) Args(args ...driver.Value) *Stub {
 	return s
 }
 
+// Priority adds the given priority to this stub, without performing any matching.
+func (s *Stub) Priority(p int) *Stub {
+	s.chain = append(s.chain, priorityCond{p})
+	return s
+}
+
 // StubCSV takes CSV data and registers this stub with the driver
 func (s *Stub) StubCSV(data string) {
 	s.resolve = func(in input) {
@@ -84,12 +90,12 @@ func (s *Stub) rows(in input) (*rows, error) {
 }
 
 func (s *Stub) priority() int {
-	return len(s.chain)
+	return s.chain.priority()
 }
 
 // stubs are arranged by how complex they are for now
 type stubs []*Stub
 
 func (s stubs) Len() int           { return len(s) }
-func (s stubs) Less(i, j int) bool { return s[i].priority() < s[j].priority() }
+func (s stubs) Less(i, j int) bool { return s[i].priority() > s[j].priority() }
 func (s stubs) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }

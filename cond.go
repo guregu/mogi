@@ -2,8 +2,10 @@ package mogi
 
 import (
 	"reflect"
+	"strings"
 	// "database/sql"
 	"database/sql/driver"
+	"fmt"
 
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/youtube/vitess/go/vt/sqlparser"
@@ -11,6 +13,8 @@ import (
 
 type cond interface {
 	matches(in input) bool
+	priority() int
+	fmt.Stringer
 }
 
 type condchain []cond
@@ -22,6 +26,18 @@ func (chain condchain) matches(in input) bool {
 		}
 	}
 	return true
+}
+
+func (chain condchain) priority() int {
+	p := 0
+	for _, c := range chain {
+		p += c.priority()
+	}
+	return p
+}
+
+func (chain condchain) String() string {
+	return "Chain..."
 }
 
 type selectCond struct {
@@ -42,6 +58,18 @@ func (sc selectCond) matches(in input) bool {
 	return reflect.DeepEqual(sc.cols, in.cols())
 }
 
+func (sc selectCond) priority() int {
+	return 1 + len(sc.cols)
+}
+
+func (sc selectCond) String() string {
+	cols := "(*)" // TODO support star select
+	if len(sc.cols) > 0 {
+		cols = strings.Join(sc.cols, ", ")
+	}
+	return fmt.Sprintf("SELECT %s", cols)
+}
+
 type fromCond struct {
 	tables []string
 }
@@ -55,6 +83,14 @@ func (fc fromCond) matches(in input) bool {
 		}
 	}
 	return reflect.DeepEqual(fc.tables, inTables)
+}
+
+func (fc fromCond) priority() int {
+	return len(fc.tables)
+}
+
+func (fc fromCond) String() string {
+	return fmt.Sprintf("FROM %s", strings.Join(fc.tables, ", "))
 }
 
 type tableCond struct {
@@ -71,6 +107,14 @@ func (tc tableCond) matches(in input) bool {
 		return tc.table == string(x.Table.Name)
 	}
 	return false
+}
+
+func (tc tableCond) priority() int {
+	return 1
+}
+
+func (tc tableCond) String() string {
+	return fmt.Sprintf("TABLE %s", tc.table)
 }
 
 type whereCond struct {
@@ -94,6 +138,14 @@ func (wc whereCond) matches(in input) bool {
 	return reflect.DeepEqual(wc.v, v)
 }
 
+func (wc whereCond) priority() int {
+	return 1
+}
+
+func (wc whereCond) String() string {
+	return fmt.Sprintf("WHERE %s ≈ %v", wc.col, wc.v)
+}
+
 type argsCond struct {
 	args []driver.Value
 }
@@ -101,6 +153,14 @@ type argsCond struct {
 func (ac argsCond) matches(in input) bool {
 	given := unifyArray(ac.args)
 	return reflect.DeepEqual(given, in.args)
+}
+
+func (ac argsCond) priority() int {
+	return 1
+}
+
+func (ac argsCond) String() string {
+	return fmt.Sprintf("WITH ARGS %+v", ac.args)
 }
 
 type insertCond struct {
@@ -119,6 +179,18 @@ func (ic insertCond) matches(in input) bool {
 	}
 
 	return reflect.DeepEqual(ic.cols, in.cols())
+}
+
+func (ic insertCond) priority() int {
+	return 1 + len(ic.cols)
+}
+
+func (ic insertCond) String() string {
+	cols := "(*)" // TODO support star select
+	if len(ic.cols) > 0 {
+		cols = strings.Join(ic.cols, ", ")
+	}
+	return fmt.Sprintf("INSERT %s", cols)
 }
 
 type valueCond struct {
@@ -158,6 +230,14 @@ func (vc valueCond) matches(in input) bool {
 	return false
 }
 
+func (vc valueCond) priority() int {
+	return 1
+}
+
+func (vc valueCond) String() string {
+	return fmt.Sprintf("VALUE %s ≈ %v (row %d)", vc.col, vc.v, vc.row)
+}
+
 type updateCond struct {
 	cols []string
 }
@@ -174,4 +254,32 @@ func (uc updateCond) matches(in input) bool {
 	}
 
 	return reflect.DeepEqual(uc.cols, in.cols())
+}
+
+func (uc updateCond) priority() int {
+	return 1 + len(uc.cols)
+}
+
+func (uc updateCond) String() string {
+	cols := "(*)" // TODO support star select
+	if len(uc.cols) > 0 {
+		cols = strings.Join(uc.cols, ", ")
+	}
+	return fmt.Sprintf("UPDATE %s", cols)
+}
+
+type priorityCond struct {
+	p int
+}
+
+func (pc priorityCond) matches(in input) bool {
+	return true
+}
+
+func (pc priorityCond) priority() int {
+	return pc.p
+}
+
+func (pc priorityCond) String() string {
+	return "PRIORITY"
 }
