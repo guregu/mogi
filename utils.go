@@ -33,7 +33,11 @@ func unifyArray(arr []driver.Value) []driver.Value {
 func valToInterface(v sqlparser.ValExpr) interface{} {
 	switch x := v.(type) {
 	case *sqlparser.ColName:
-		return string(x.Name)
+		name := string(x.Name)
+		if x.Qualifier != nil {
+			name = fmt.Sprintf("%s.%s", x.Qualifier, name)
+		}
+		return name
 	case sqlparser.ValArg:
 		// vitess makes args like :v1
 		str := string(x)
