@@ -364,6 +364,15 @@ func TestUpdateWhere(t *testing.T) {
 	}
 }
 
+func TestSelectCount(t *testing.T) {
+	defer mogi.Reset()
+	db := openDB()
+
+	mogi.Select().Dump().StubCSV("")
+	_, err := db.Query("SELECT COUNT(abc), COUNT(*) FROM beer")
+	checkNil(t, err)
+}
+
 func runUnstubbedSelect(t *testing.T, db *sql.DB) {
 	_, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE pct > ?", 5)
 	if err != mogi.ErrUnstubbed {

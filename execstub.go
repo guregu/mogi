@@ -72,8 +72,15 @@ func (s *ExecStub) Args(args ...driver.Value) *ExecStub {
 	return s
 }
 
+// Priority adds the given priority to this stub, without performing any matching.
 func (s *ExecStub) Priority(p int) *ExecStub {
 	s.chain = append(s.chain, priorityCond{p})
+	return s
+}
+
+// Dump outputs debug information, without performing any matching.
+func (s *ExecStub) Dump() *ExecStub {
+	s.chain = append(s.chain, dumpCond{})
 	return s
 }
 

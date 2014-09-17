@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/youtube/vitess/go/vt/sqlparser"
 )
@@ -30,7 +31,7 @@ func unifyArray(arr []driver.Value) []driver.Value {
 	return arr
 }
 
-func valToInterface(v sqlparser.ValExpr) interface{} {
+func valToInterface(v interface{}) interface{} {
 	switch x := v.(type) {
 	case *sqlparser.ColName:
 		name := string(x.Name)
@@ -38,6 +39,20 @@ func valToInterface(v sqlparser.ValExpr) interface{} {
 			name = fmt.Sprintf("%s.%s", x.Qualifier, name)
 		}
 		return name
+	case *sqlparser.NonStarExpr:
+		if x.As != nil {
+			return string(x.As)
+		}
+		return valToInterface(x.Expr)
+	case *sqlparser.StarExpr:
+		return "*"
+	case *sqlparser.FuncExpr:
+		name := strings.ToUpper(string(x.Name))
+		var args []string
+		for _, expr := range x.Exprs {
+			args = append(args, stringify(valToInterface(expr)))
+		}
+		return fmt.Sprintf("%s(%s)", name, strings.Join(args, ", "))
 	case sqlparser.ValArg:
 		// vitess makes args like :v1
 		str := string(x)
@@ -63,25 +78,16 @@ func valToInterface(v sqlparser.ValExpr) interface{} {
 			return f
 		}
 	default:
-		//panic(x)
+		panic(x)
 	}
 	return nil
 }
 
 func extractColumnName(nse *sqlparser.NonStarExpr) string {
-	colname, ok := nse.Expr.(*sqlparser.ColName)
-	if !ok {
-		log.Println("something other than ColName", nse.Expr)
-		panic(colname)
+	if nse.As != nil {
+		return string(nse.As)
 	}
-	name := string(colname.Name)
-	switch {
-	case nse.As != nil:
-		name = string(nse.As)
-	case colname.Qualifier != nil:
-		name = fmt.Sprintf("%s.%s", colname.Qualifier, colname.Name)
-	}
-	return name
+	return stringify(valToInterface(nse.Expr))
 }
 
 func extractTableNames(tables *[]string, from sqlparser.TableExpr) {
@@ -109,4 +115,20 @@ func extractBoolExpr(vals map[string]interface{}, expr sqlparser.BoolExpr) map[s
 		vals[column] = valToInterface(x.Right)
 	}
 	return vals
+}
+
+func stringify(v interface{}) string {
+	switch x := v.(type) {
+	case string:
+		return x
+	case []byte:
+		return string(x)
+	case int64:
+		return strconv.FormatInt(x, 10)
+	case float64:
+		return strconv.FormatFloat(x, 'f', -1, 64)
+	default:
+		fmt.Println("stringify unknown type %T: %v", v, v)
+	}
+	return "???"
 }

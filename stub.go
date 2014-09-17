@@ -51,6 +51,12 @@ func (s *Stub) Priority(p int) *Stub {
 	return s
 }
 
+// Dump outputs debug information, without performing any matching.
+func (s *Stub) Dump() *Stub {
+	s.chain = append(s.chain, dumpCond{})
+	return s
+}
+
 // StubCSV takes CSV data and registers this stub with the driver
 func (s *Stub) StubCSV(data string) {
 	s.resolve = func(in input) {

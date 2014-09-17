@@ -41,12 +41,7 @@ func (in input) cols() []string {
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
 		for _, sexpr := range x.SelectExprs {
-			nse, ok := sexpr.(*sqlparser.NonStarExpr)
-			if !ok {
-				log.Println("something other than NonStarExpr", sexpr)
-				continue
-			}
-			name := extractColumnName(nse)
+			name := stringify(valToInterface(sexpr))
 			cols = append(cols, name)
 		}
 	case *sqlparser.Insert:
@@ -123,6 +118,9 @@ func (in input) where() map[string]interface{} {
 
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
+		if x.Where == nil {
+			return map[string]interface{}{}
+		}
 		in.whereVars = extractBoolExpr(nil, x.Where.Expr)
 		// replace placeholders
 		for k, v := range in.whereVars {

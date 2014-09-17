@@ -7,7 +7,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	// "github.com/davecgh/go-spew/spew"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/youtube/vitess/go/vt/sqlparser"
 )
 
@@ -282,4 +282,22 @@ func (pc priorityCond) priority() int {
 
 func (pc priorityCond) String() string {
 	return "PRIORITY"
+}
+
+type dumpCond struct{}
+
+func (dc dumpCond) matches(in input) bool {
+	fmt.Println(in.query)
+	spew.Dump(in.args)
+	spew.Dump(in.cols(), in.values(), in.where(), in.rows())
+	spew.Dump(in.statement)
+	return true
+}
+
+func (dc dumpCond) priority() int {
+	return 0
+}
+
+func (dc dumpCond) String() string {
+	return "DUMP"
 }
