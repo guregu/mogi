@@ -65,15 +65,15 @@ func csvToValues(cols []string, s string) [][]driver.Value {
 			break
 		}
 
-		row := make([]driver.Value, len(cols))
-		for i, v := range res {
+		row := []driver.Value{}
+		for _, v := range res {
 			if timeLayout != "" {
 				if t, err := time.Parse(timeLayout, v); err == nil {
-					row[i] = t
+					row = append(row, t)
 					continue
 				}
 			}
-			row[i] = []byte(strings.TrimSpace(v))
+			row = append(row, []byte(strings.TrimSpace(v)))
 		}
 		data = append(data, row)
 	}

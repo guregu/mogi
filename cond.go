@@ -63,7 +63,7 @@ func (sc selectCond) priority() int {
 }
 
 func (sc selectCond) String() string {
-	cols := "(*)" // TODO support star select
+	cols := "(any)" // TODO support star select
 	if len(sc.cols) > 0 {
 		cols = strings.Join(sc.cols, ", ")
 	}
@@ -190,7 +190,7 @@ func (ic insertCond) priority() int {
 }
 
 func (ic insertCond) String() string {
-	cols := "(*)" // TODO support star select
+	cols := "(any)" // TODO support star select
 	if len(ic.cols) > 0 {
 		cols = strings.Join(ic.cols, ", ")
 	}
@@ -265,7 +265,7 @@ func (uc updateCond) priority() int {
 }
 
 func (uc updateCond) String() string {
-	cols := "(*)" // TODO support star select
+	cols := "(any)" // TODO support star select
 	if len(uc.cols) > 0 {
 		cols = strings.Join(uc.cols, ", ")
 	}

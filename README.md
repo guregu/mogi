@@ -149,14 +149,14 @@ mogi.Select("release").
 Dump all the stubs with `mogi.Dump()`. It will print something like this:
 ```
 Query stubs: (1 total)
-#1     [3]     SELECT (*)          [+1]
+#1     [3]     SELECT (any)        [+1]
                FROM device_tokens  [+1]
                WHERE user_id ≈ 42  [+1]
 Exec stubs: (3 total)
-#1     [3]     INSERT (*)                               [+1]
+#1     [3]     INSERT (any)                             [+1]
                TABLE device_tokens                      [+1]
                VALUE device_type ≈ gunosy_lite (row 0)  [+1]
-#2     [2]     INSERT (*)                               [+1]
+#2     [2]     INSERT (any)                             [+1]
                TABLE device_tokens                      [+1]
 #3     [-995]  INSERT a, b, c                           [+4]
                PRIORITY                                 [-999]
