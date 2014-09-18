@@ -148,18 +148,22 @@ mogi.Select("release").
 ##### Dump stubs
 Dump all the stubs with `mogi.Dump()`. It will print something like this:
 ```
-Query stubs: (1 total)
-#1     [3]     SELECT (any)        [+1]
-               FROM device_tokens  [+1]
-               WHERE user_id ≈ 42  [+1]
-Exec stubs: (3 total)
-#1     [3]     INSERT (any)                             [+1]
-               TABLE device_tokens                      [+1]
-               VALUE device_type ≈ gunosy_lite (row 0)  [+1]
-#2     [2]     INSERT (any)                             [+1]
-               TABLE device_tokens                      [+1]
-#3     [-995]  INSERT a, b, c                           [+4]
-               PRIORITY                                 [-999]
+>>		Query stubs: (1 total)							
+		=========================						
+#1	[3]	SELECT (any)								[+1]
+		FROM device_tokens							[+1]
+		WHERE user_id ≈ [42]						[+1]
+		→ error: sql: no rows in result set					
+											
+>>		Exec stubs: (2 total)							
+		=========================						
+#1	[3]	INSERT (any)								[+1]
+		TABLE device_tokens							[+1]
+		VALUE device_type ≈ gunosy_lite (row 0)		[+1]
+		→ result ID: 1337, rows: 1						
+#2	[2]	INSERT (any)								[+1]
+		TABLE device_tokens							[+1]
+		→ error: device_type should be overwriten 	
 ```
 This is helpful when you're debugging and need to double-check the priorities and conditions you've stubbed. 
 The numbers in [brackets] are the priorities. 

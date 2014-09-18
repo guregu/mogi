@@ -48,7 +48,8 @@ func ParseTime(layout string) {
 // Helpful for debugging.
 func Dump() {
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 0, '\t', 0)
-	fmt.Fprintf(w, "Query stubs: (%d total)\n", len(drv.conn.stubs))
+	fmt.Fprintf(w, ">>\t\tQuery stubs: (%d total)\t\n", len(drv.conn.stubs))
+	fmt.Fprintf(w, "\t\t=========================\t\n")
 	for rank, s := range drv.conn.stubs {
 		for i, c := range s.chain {
 			if i == 0 {
@@ -57,8 +58,16 @@ func Dump() {
 			}
 			fmt.Fprintf(w, "\t\t%s\t[%+d]\n", c, c.priority())
 		}
+		switch {
+		case s.err != nil:
+			fmt.Fprintf(w, "\t\t→ error: %v\t\n", s.err)
+		case s.data != nil, s.resolve != nil:
+			fmt.Fprintln(w, "\t\t→ data\t\n")
+		}
 	}
-	fmt.Fprintf(w, "Exec stubs: (%d total)\n", len(drv.conn.execStubs))
+	fmt.Fprintf(w, "\t\t\t\n")
+	fmt.Fprintf(w, ">>\t\tExec stubs: (%d total)\t\n", len(drv.conn.execStubs))
+	fmt.Fprintf(w, "\t\t=========================\t\n")
 	for rank, s := range drv.conn.execStubs {
 		for i, c := range s.chain {
 			if i == 0 {
@@ -66,6 +75,16 @@ func Dump() {
 				continue
 			}
 			fmt.Fprintf(w, "\t\t%s\t[%+d]\n", c, c.priority())
+		}
+		switch {
+		case s.err != nil:
+			fmt.Fprintf(w, "\t\t→ error: %v\t\n", s.err)
+		case s.result != nil:
+			if r, ok := s.result.(execResult); ok {
+				fmt.Fprintf(w, "\t\t→ result ID: %d, rows: %d\t\n", r.lastInsertID, r.rowsAffected)
+			} else {
+				fmt.Fprintf(w, "\t\t→ result %T\t\n", s.result)
+			}
 		}
 	}
 	w.Flush()
