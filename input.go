@@ -41,7 +41,7 @@ func (in input) cols() []string {
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
 		for _, sexpr := range x.SelectExprs {
-			name := stringify(valToInterface(sexpr))
+			name := stringify(transmogrify(sexpr))
 			cols = append(cols, name)
 		}
 	case *sqlparser.Insert:
@@ -73,7 +73,7 @@ func (in input) values() map[string]interface{} {
 		for _, expr := range x.Exprs {
 			// TODO qualifiers
 			colName := string(expr.Name.Name)
-			v := valToInterface(expr.Expr)
+			v := transmogrify(expr.Expr)
 			if a, ok := v.(arg); ok {
 				// replace placeholders
 				v = unify(in.args[int(a)])
@@ -99,7 +99,7 @@ func (in input) rows() []map[string]interface{} {
 			row := rowTuple.(sqlparser.ValTuple)
 			for j, val := range row {
 				colName := cols[j]
-				v := valToInterface(val)
+				v := transmogrify(val)
 				if a, ok := v.(arg); ok {
 					// replace placeholders
 					v = unify(in.args[int(a)])
@@ -111,6 +111,8 @@ func (in input) rows() []map[string]interface{} {
 	return vals
 }
 
+// for SELECT and UPDATE
+// TODO: DRY
 func (in input) where() map[string]interface{} {
 	if in.whereVars != nil {
 		return in.whereVars
@@ -126,6 +128,16 @@ func (in input) where() map[string]interface{} {
 		for k, v := range in.whereVars {
 			if a, ok := v.(arg); ok {
 				in.whereVars[k] = unify(in.args[int(a)])
+				continue
+			}
+
+			// arrays
+			if arr, ok := v.([]interface{}); ok {
+				for i, v := range arr {
+					if a, ok := v.(arg); ok {
+						arr[i] = unify(in.args[int(a)])
+					}
+				}
 			}
 		}
 		return in.whereVars
@@ -135,6 +147,16 @@ func (in input) where() map[string]interface{} {
 		for k, v := range in.whereVars {
 			if a, ok := v.(arg); ok {
 				in.whereVars[k] = unify(in.args[int(a)])
+				continue
+			}
+
+			// arrays
+			if arr, ok := v.([]interface{}); ok {
+				for i, v := range arr {
+					if a, ok := v.(arg); ok {
+						arr[i] = unify(in.args[int(a)])
+					}
+				}
 			}
 		}
 		return in.whereVars

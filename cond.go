@@ -119,13 +119,13 @@ func (tc tableCond) String() string {
 
 type whereCond struct {
 	col string
-	v   interface{}
+	v   []interface{}
 }
 
-func newWhereCond(col string, v interface{}) whereCond {
+func newWhereCond(col string, v []interface{}) whereCond {
 	return whereCond{
 		col: col,
-		v:   unify(v),
+		v:   unifyArray(v),
 	}
 }
 
@@ -134,6 +134,10 @@ func (wc whereCond) matches(in input) bool {
 	v, ok := vals[wc.col]
 	if !ok {
 		return false
+	}
+	// if we aren't comparing against an array, use the first value
+	if _, isArray := v.([]interface{}); !isArray {
+		return reflect.DeepEqual(wc.v[0], v)
 	}
 	return reflect.DeepEqual(wc.v, v)
 }
@@ -151,7 +155,7 @@ type argsCond struct {
 }
 
 func (ac argsCond) matches(in input) bool {
-	given := unifyArray(ac.args)
+	given := unifyValues(ac.args)
 	return reflect.DeepEqual(given, in.args)
 }
 
@@ -289,7 +293,14 @@ type dumpCond struct{}
 func (dc dumpCond) matches(in input) bool {
 	fmt.Println(in.query)
 	spew.Dump(in.args)
-	spew.Dump(in.cols(), in.values(), in.where(), in.rows())
+	switch in.statement.(type) {
+	case *sqlparser.Select:
+		spew.Dump(in.cols(), in.where())
+	case *sqlparser.Insert:
+		spew.Dump(in.cols(), in.rows())
+	case *sqlparser.Update:
+		spew.Dump(in.cols(), in.values(), in.where())
+	}
 	spew.Dump(in.statement)
 	return true
 }

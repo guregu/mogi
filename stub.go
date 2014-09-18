@@ -33,8 +33,9 @@ func (s *Stub) From(tables ...string) *Stub {
 	return s
 }
 
-// Where further filters this stub by values of input in the WHERE clause
-func (s *Stub) Where(col string, v interface{}) *Stub {
+// Where further filters this stub by values of input in the WHERE clause.
+// You can pass multiple values for IN clause matching.
+func (s *Stub) Where(col string, v ...interface{}) *Stub {
 	s.chain = append(s.chain, newWhereCond(col, v))
 	return s
 }

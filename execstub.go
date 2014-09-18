@@ -60,8 +60,9 @@ func (s *ExecStub) ValueAt(row int, col string, v interface{}) *ExecStub {
 	return s
 }
 
-// Where further filters this stub by values of input in the WHERE clause
-func (s *ExecStub) Where(col string, v interface{}) *ExecStub {
+// Where further filters this stub by values of input in the WHERE clause.
+// You can pass multiple values for IN clause matching.
+func (s *ExecStub) Where(col string, v ...interface{}) *ExecStub {
 	s.chain = append(s.chain, newWhereCond(col, v))
 	return s
 }

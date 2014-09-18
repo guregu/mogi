@@ -24,14 +24,22 @@ func unify(v interface{}) interface{} {
 	return v
 }
 
-func unifyArray(arr []driver.Value) []driver.Value {
+func unifyValues(arr []driver.Value) []driver.Value {
 	for i, v := range arr {
 		arr[i] = unify(v)
 	}
 	return arr
 }
 
-func valToInterface(v interface{}) interface{} {
+func unifyArray(arr []interface{}) []interface{} {
+	for i, v := range arr {
+		arr[i] = unify(v)
+	}
+	return arr
+}
+
+// transmogrify takes sqlparser expressions and turns them into useful go values
+func transmogrify(v interface{}) interface{} {
 	switch x := v.(type) {
 	case *sqlparser.ColName:
 		name := string(x.Name)
@@ -43,14 +51,14 @@ func valToInterface(v interface{}) interface{} {
 		if x.As != nil {
 			return string(x.As)
 		}
-		return valToInterface(x.Expr)
+		return transmogrify(x.Expr)
 	case *sqlparser.StarExpr:
 		return "*"
 	case *sqlparser.FuncExpr:
 		name := strings.ToUpper(string(x.Name))
 		var args []string
 		for _, expr := range x.Exprs {
-			args = append(args, stringify(valToInterface(expr)))
+			args = append(args, stringify(transmogrify(expr)))
 		}
 		return fmt.Sprintf("%s(%s)", name, strings.Join(args, ", "))
 	case sqlparser.ValArg:
@@ -77,8 +85,15 @@ func valToInterface(v interface{}) interface{} {
 		if err == nil {
 			return f
 		}
+	case sqlparser.ValTuple:
+		vals := make([]interface{}, 0, len(x))
+		for _, item := range x {
+			vals = append(vals, transmogrify(item))
+		}
+		return vals
 	default:
-		panic(x)
+		log.Println("unknown transmogrify: (%T) %v", v, v)
+		//panic(x)
 	}
 	return nil
 }
@@ -87,7 +102,7 @@ func extractColumnName(nse *sqlparser.NonStarExpr) string {
 	if nse.As != nil {
 		return string(nse.As)
 	}
-	return stringify(valToInterface(nse.Expr))
+	return stringify(transmogrify(nse.Expr))
 }
 
 func extractTableNames(tables *[]string, from sqlparser.TableExpr) {
@@ -111,8 +126,8 @@ func extractBoolExpr(vals map[string]interface{}, expr sqlparser.BoolExpr) map[s
 		extractBoolExpr(vals, x.Left)
 		extractBoolExpr(vals, x.Right)
 	case *sqlparser.ComparisonExpr:
-		column := valToInterface(x.Left).(string)
-		vals[column] = valToInterface(x.Right)
+		column := transmogrify(x.Left).(string)
+		vals[column] = transmogrify(x.Right)
 	}
 	return vals
 }

@@ -368,8 +368,17 @@ func TestSelectCount(t *testing.T) {
 	defer mogi.Reset()
 	db := openDB()
 
-	mogi.Select().Dump().StubCSV("")
+	mogi.Select("COUNT(abc)", "COUNT(*)").StubCSV("")
 	_, err := db.Query("SELECT COUNT(abc), COUNT(*) FROM beer")
+	checkNil(t, err)
+}
+
+func TestSelectWhereIn(t *testing.T) {
+	defer mogi.Reset()
+	db := openDB()
+
+	mogi.Select().Where("pct", 5.4, 10.2).Dump().StubCSV("555")
+	_, err := db.Query("SELECT COUNT(*) FROM beer WHERE pct IN (5.4, ?)", 10.2)
 	checkNil(t, err)
 }
 
