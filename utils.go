@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	// "github.com/davecgh/go-spew/spew"
 	"github.com/youtube/vitess/go/vt/sqlparser"
 )
 
@@ -61,6 +62,9 @@ func transmogrify(v interface{}) interface{} {
 			args = append(args, stringify(transmogrify(expr)))
 		}
 		return fmt.Sprintf("%s(%s)", name, strings.Join(args, ", "))
+	case *sqlparser.BinaryExpr:
+		// TODO: figure out some way to make this work
+		return transmogrify(x.Left)
 	case sqlparser.ValArg:
 		// vitess makes args like :v1
 		str := string(x)
@@ -92,7 +96,7 @@ func transmogrify(v interface{}) interface{} {
 		}
 		return vals
 	default:
-		log.Println("unknown transmogrify: (%T) %v", v, v)
+		log.Printf("unknown transmogrify: (%T) %v\n", v, v)
 		//panic(x)
 	}
 	return nil
@@ -142,8 +146,10 @@ func stringify(v interface{}) string {
 		return strconv.FormatInt(x, 10)
 	case float64:
 		return strconv.FormatFloat(x, 'f', -1, 64)
+	case nil:
+		return "NULL"
 	default:
-		fmt.Println("stringify unknown type %T: %v", v, v)
+		fmt.Printf("stringify unknown type %T: %v\n", v, v)
 	}
 	return "???"
 }

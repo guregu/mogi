@@ -49,7 +49,7 @@ func (c *conn) Query(query string, args []driver.Value) (driver.Rows, error) {
 		}
 	}
 	if verbose {
-		log.Println("Unstubbed query", query, args)
+		log.Println("Unstubbed query:", query, args)
 	}
 	return nil, ErrUnstubbed
 }
@@ -65,7 +65,7 @@ func (c *conn) Exec(query string, args []driver.Value) (driver.Result, error) {
 		}
 	}
 	if verbose {
-		log.Println("Unstubbed query", query, args)
+		log.Println("Unstubbed query:", query, args)
 	}
 	return nil, ErrUnstubbed
 }
