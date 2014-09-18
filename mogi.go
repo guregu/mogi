@@ -17,7 +17,8 @@ var (
 )
 
 var (
-	verbose = false
+	verbose    = false
+	timeLayout = ""
 )
 
 func init() {
@@ -34,6 +35,13 @@ func Reset() {
 // Verbose turns on unstubbed logging when v is true
 func Verbose(v bool) {
 	verbose = v
+}
+
+// ParseTime will configure mogi to convert dates of the given layout
+// (e.g. time.RFC3339) to time.Time when using StubCSV.
+// Give it an empty string to turn off time parsing.
+func ParseTime(layout string) {
+	timeLayout = layout
 }
 
 // Dump prints all the current stubs, in order of priority.

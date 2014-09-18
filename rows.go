@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"io"
 	"strings"
+	"time"
 )
 
 type rows struct {
@@ -52,7 +53,6 @@ func (r *rows) Next(dest []driver.Value) error {
 
 // cribbed from DATA-DOG/go-sqlmock
 // TODO rewrite
-// TODO remove trimspace
 func csvToValues(cols []string, s string) [][]driver.Value {
 	var data [][]driver.Value
 
@@ -67,6 +67,12 @@ func csvToValues(cols []string, s string) [][]driver.Value {
 
 		row := make([]driver.Value, len(cols))
 		for i, v := range res {
+			if timeLayout != "" {
+				if t, err := time.Parse(timeLayout, v); err == nil {
+					row[i] = t
+					continue
+				}
+			}
 			row[i] = []byte(strings.TrimSpace(v))
 		}
 		data = append(data, row)

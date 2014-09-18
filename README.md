@@ -48,6 +48,10 @@ rows, err := db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 10
 rows, err = db.Query("SELECT id, name, brewery, pct FROM beer WHERE id = ?", 42)
 ...
 
+// Pass multiple arguments to Where() for IN clauses. 
+mogi.Select().Where("id", 10, 42).StubCSV("Apex\nWestvleteren XII")
+rows, err = db.Query("SELECT name FROM beer WHERE id IN (?, ?)", 10, 42)
+
 // Stub an error while you're at it
 mogi.Select().Where("id", 3).StubError(sql.ErrNoRows)
 // FYI, unstubbed queries will return mogi.ErrUnstubbed
@@ -121,6 +125,45 @@ mogi.Update().Table("beer").StubRowsAffected(1)
 // Filter by WHERE clause params
 mogi.Update().Where("id", 3).Where("moon", "full").StubRowsAffected(1)
 ```
+
+#### Other stuff
+
+##### Reset
+You can remove all the stubs you've set with `mogi.Reset()`.
+
+##### Verbose
+`mogi.Verbose(true)` will enable verbose mode, logging unstubbed queries. 
+
+##### Parse time
+Set the time layout with `mogi.ParseTime()`. CSV values matching that layout will be converted to time.Time. 
+You can also stub time.Time directly using the `Stub()` method. 
+```go
+mogi.ParseTime(time.RFC3339)
+mogi.Select("release").
+		From("beer").
+		Where("id", 42).
+		StubCSV(`2014-06-30T12:00:00Z`)
+```
+
+##### Dump stubs
+Dump all the stubs with `mogi.Dump()`. It will print something like this:
+```
+Query stubs: (1 total)
+#1     [3]     SELECT (*)          [+1]
+               FROM device_tokens  [+1]
+               WHERE user_id ≈ 42  [+1]
+Exec stubs: (3 total)
+#1     [3]     INSERT (*)                               [+1]
+               TABLE device_tokens                      [+1]
+               VALUE device_type ≈ gunosy_lite (row 0)  [+1]
+#2     [2]     INSERT (*)                               [+1]
+               TABLE device_tokens                      [+1]
+#3     [-995]  INSERT a, b, c                           [+4]
+               PRIORITY                                 [-999]
+```
+This is helpful when you're debugging and need to double-check the priorities and conditions you've stubbed. 
+The numbers in [brackets] are the priorities. 
+You can also add `Dump()` to a stub condition chain. It will dump lots of information about the query when matched. 
 
 ### License
 BSD
