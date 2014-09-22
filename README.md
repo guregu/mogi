@@ -126,6 +126,9 @@ mogi.Update().Table("beer").StubRowsAffected(1)
 mogi.Update().Where("id", 3).Where("moon", "full").StubRowsAffected(1)
 ```
 
+#### Stubbing DELETE queries
+Works the same as UPDATE, docs later!
+
 #### Other stuff
 
 ##### Reset

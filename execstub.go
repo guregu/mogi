@@ -33,7 +33,14 @@ func Update(cols ...string) *ExecStub {
 	}
 }
 
-// Into further filters this stub, matching the target table in INSERT or UPDATEs.
+// Delete starts a new stub for DELETE statements.
+func Delete() *ExecStub {
+	return &ExecStub{
+		chain: condchain{deleteCond{}},
+	}
+}
+
+// Into further filters this stub, matching the target table in INSERT, UPDATE, or DELETE.
 func (s *ExecStub) Table(table string) *ExecStub {
 	s.chain = append(s.chain, tableCond{
 		table: table,
@@ -43,6 +50,11 @@ func (s *ExecStub) Table(table string) *ExecStub {
 
 // Into further filters this stub, matching based on the INTO table specified.
 func (s *ExecStub) Into(table string) *ExecStub {
+	return s.Table(table)
+}
+
+// From further filters this stub, matching based on the FROM table specified.
+func (s *ExecStub) From(table string) *ExecStub {
 	return s.Table(table)
 }
 

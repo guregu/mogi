@@ -111,55 +111,42 @@ func (in input) rows() []map[string]interface{} {
 	return vals
 }
 
-// for SELECT and UPDATE
+// for SELECT and UPDATE and DELETE
 // TODO: DRY
 func (in input) where() map[string]interface{} {
 	if in.whereVars != nil {
 		return in.whereVars
 	}
-
+	var w *sqlparser.Where
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
-		if x.Where == nil {
-			return map[string]interface{}{}
-		}
-		in.whereVars = extractBoolExpr(nil, x.Where.Expr)
-		// replace placeholders
-		for k, v := range in.whereVars {
-			if a, ok := v.(arg); ok {
-				in.whereVars[k] = unify(in.args[int(a)])
-				continue
-			}
-
-			// arrays
-			if arr, ok := v.([]interface{}); ok {
-				for i, v := range arr {
-					if a, ok := v.(arg); ok {
-						arr[i] = unify(in.args[int(a)])
-					}
-				}
-			}
-		}
-		return in.whereVars
+		w = x.Where
 	case *sqlparser.Update:
-		in.whereVars = extractBoolExpr(nil, x.Where.Expr)
-		// replace placeholders
-		for k, v := range in.whereVars {
-			if a, ok := v.(arg); ok {
-				in.whereVars[k] = unify(in.args[int(a)])
-				continue
-			}
+		w = x.Where
+	case *sqlparser.Delete:
+		w = x.Where
+	default:
+		return nil
+	}
+	if w == nil {
+		return map[string]interface{}{}
+	}
+	in.whereVars = extractBoolExpr(nil, w.Expr)
+	// replace placeholders
+	for k, v := range in.whereVars {
+		if a, ok := v.(arg); ok {
+			in.whereVars[k] = unify(in.args[int(a)])
+			continue
+		}
 
-			// arrays
-			if arr, ok := v.([]interface{}); ok {
-				for i, v := range arr {
-					if a, ok := v.(arg); ok {
-						arr[i] = unify(in.args[int(a)])
-					}
+		// arrays
+		if arr, ok := v.([]interface{}); ok {
+			for i, v := range arr {
+				if a, ok := v.(arg); ok {
+					arr[i] = unify(in.args[int(a)])
 				}
 			}
 		}
-		return in.whereVars
 	}
-	return nil
+	return in.whereVars
 }

@@ -59,7 +59,10 @@ func (sc selectCond) matches(in input) bool {
 }
 
 func (sc selectCond) priority() int {
-	return 1 + len(sc.cols)
+	if len(sc.cols) > 0 {
+		return 2
+	}
+	return 1
 }
 
 func (sc selectCond) String() string {
@@ -86,7 +89,10 @@ func (fc fromCond) matches(in input) bool {
 }
 
 func (fc fromCond) priority() int {
-	return len(fc.tables)
+	if len(fc.tables) > 0 {
+		return 1
+	}
+	return 0
 }
 
 func (fc fromCond) String() string {
@@ -186,7 +192,10 @@ func (ic insertCond) matches(in input) bool {
 }
 
 func (ic insertCond) priority() int {
-	return 1 + len(ic.cols)
+	if len(ic.cols) > 0 {
+		return 2
+	}
+	return 1
 }
 
 func (ic insertCond) String() string {
@@ -261,7 +270,10 @@ func (uc updateCond) matches(in input) bool {
 }
 
 func (uc updateCond) priority() int {
-	return 1 + len(uc.cols)
+	if len(uc.cols) > 0 {
+		return 2
+	}
+	return 1
 }
 
 func (uc updateCond) String() string {
@@ -270,6 +282,21 @@ func (uc updateCond) String() string {
 		cols = strings.Join(uc.cols, ", ")
 	}
 	return fmt.Sprintf("UPDATE %s", cols)
+}
+
+type deleteCond struct{}
+
+func (uc deleteCond) matches(in input) bool {
+	_, ok := in.statement.(*sqlparser.Delete)
+	return ok
+}
+
+func (uc deleteCond) priority() int {
+	return 1
+}
+
+func (uc deleteCond) String() string {
+	return "DELETE"
 }
 
 type priorityCond struct {
