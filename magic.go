@@ -126,6 +126,9 @@ func extractBoolExpr(vals map[string]interface{}, expr sqlparser.BoolExpr) map[s
 		vals = make(map[string]interface{})
 	}
 	switch x := expr.(type) {
+	case *sqlparser.OrExpr:
+		extractBoolExpr(vals, x.Left)
+		extractBoolExpr(vals, x.Right)
 	case *sqlparser.AndExpr:
 		extractBoolExpr(vals, x.Left)
 		extractBoolExpr(vals, x.Right)
