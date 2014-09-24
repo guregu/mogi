@@ -39,6 +39,14 @@ func unifyArray(arr []interface{}) []interface{} {
 	return arr
 }
 
+func lowercase(arr []string) []string {
+	lower := make([]string, 0, len(arr))
+	for _, str := range arr {
+		lower = append(lower, strings.ToLower(str))
+	}
+	return lower
+}
+
 // transmogrify takes sqlparser expressions and turns them into useful go values
 func transmogrify(v interface{}) interface{} {
 	switch x := v.(type) {

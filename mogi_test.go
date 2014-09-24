@@ -368,7 +368,7 @@ func TestSelectCount(t *testing.T) {
 	defer mogi.Reset()
 	db := openDB()
 
-	mogi.Select("COUNT(abc)", "COUNT(*)").StubCSV("")
+	mogi.Select("count(abc)", "count(*)").StubCSV("")
 	_, err := db.Query("SELECT COUNT(abc), COUNT(*) FROM beer")
 	checkNil(t, err)
 }

@@ -54,8 +54,7 @@ func (sc selectCond) matches(in input) bool {
 	if len(sc.cols) == 0 {
 		return true
 	}
-
-	return reflect.DeepEqual(sc.cols, in.cols())
+	return reflect.DeepEqual(lowercase(sc.cols), lowercase(in.cols()))
 }
 
 func (sc selectCond) priority() int {
@@ -85,7 +84,7 @@ func (fc fromCond) matches(in input) bool {
 			extractTableNames(&inTables, tex)
 		}
 	}
-	return reflect.DeepEqual(fc.tables, inTables)
+	return reflect.DeepEqual(lowercase(fc.tables), lowercase(inTables))
 }
 
 func (fc fromCond) priority() int {
@@ -106,11 +105,11 @@ type tableCond struct {
 func (tc tableCond) matches(in input) bool {
 	switch x := in.statement.(type) {
 	case *sqlparser.Insert:
-		return tc.table == string(x.Table.Name)
+		return strings.ToLower(tc.table) == strings.ToLower(string(x.Table.Name))
 	case *sqlparser.Update:
-		return tc.table == string(x.Table.Name)
+		return strings.ToLower(tc.table) == strings.ToLower(string(x.Table.Name))
 	case *sqlparser.Delete:
-		return tc.table == string(x.Table.Name)
+		return strings.ToLower(tc.table) == strings.ToLower(string(x.Table.Name))
 	}
 	return false
 }
@@ -188,7 +187,7 @@ func (ic insertCond) matches(in input) bool {
 		return true
 	}
 
-	return reflect.DeepEqual(ic.cols, in.cols())
+	return reflect.DeepEqual(lowercase(ic.cols), lowercase(in.cols()))
 }
 
 func (ic insertCond) priority() int {
@@ -266,7 +265,7 @@ func (uc updateCond) matches(in input) bool {
 		return true
 	}
 
-	return reflect.DeepEqual(uc.cols, in.cols())
+	return reflect.DeepEqual(lowercase(uc.cols), lowercase(in.cols()))
 }
 
 func (uc updateCond) priority() int {
