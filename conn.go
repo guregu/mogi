@@ -27,7 +27,9 @@ func addExecStub(s *ExecStub) {
 }
 
 func (c *conn) Prepare(query string) (driver.Stmt, error) {
-	return &stmt{}, nil
+	return &stmt{
+		query: query,
+	}, nil
 }
 
 func (c *conn) Close() error {

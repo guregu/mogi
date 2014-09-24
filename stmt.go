@@ -5,6 +5,7 @@ import (
 )
 
 type stmt struct {
+	query string
 }
 
 func (s *stmt) Close() error {
@@ -27,11 +28,11 @@ func (s *stmt) NumInput() int {
 // Exec executes a query that doesn't return rows, such
 // as an INSERT or UPDATE.
 func (s *stmt) Exec(args []driver.Value) (driver.Result, error) {
-	return nil, nil
+	return drv.conn.Exec(s.query, args)
 }
 
 // Query executes a query that may return rows, such as a
 // SELECT.
 func (s *stmt) Query(args []driver.Value) (driver.Rows, error) {
-	return nil, nil
+	return drv.conn.Query(s.query, args)
 }
