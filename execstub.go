@@ -91,6 +91,13 @@ func (s *ExecStub) Priority(p int) *ExecStub {
 	return s
 }
 
+// Notify will have this stub send to the given channel when matched.
+// You should put this as the last part of your stub chain.
+func (s *ExecStub) Notify(ch chan<- struct{}) *ExecStub {
+	s.chain = append(s.chain, notifyCond{ch})
+	return s
+}
+
 // Dump outputs debug information, without performing any matching.
 func (s *ExecStub) Dump() *ExecStub {
 	s.chain = append(s.chain, dumpCond{})

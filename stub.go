@@ -52,6 +52,13 @@ func (s *Stub) Priority(p int) *Stub {
 	return s
 }
 
+// Notify will have this stub send to the given channel when matched.
+// You should put this as the last part of your stub chain.
+func (s *Stub) Notify(ch chan<- struct{}) *Stub {
+	s.chain = append(s.chain, notifyCond{ch})
+	return s
+}
+
 // Dump outputs debug information, without performing any matching.
 func (s *Stub) Dump() *Stub {
 	s.chain = append(s.chain, dumpCond{})

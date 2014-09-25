@@ -314,6 +314,25 @@ func (pc priorityCond) String() string {
 	return "PRIORITY"
 }
 
+type notifyCond struct {
+	ch chan<- struct{}
+}
+
+func (nc notifyCond) matches(in input) bool {
+	go func() {
+		nc.ch <- struct{}{}
+	}()
+	return true
+}
+
+func (nc notifyCond) priority() int {
+	return 0
+}
+
+func (nc notifyCond) String() string {
+	return "NOTIFY"
+}
+
 type dumpCond struct{}
 
 func (dc dumpCond) matches(in input) bool {

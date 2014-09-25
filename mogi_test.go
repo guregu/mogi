@@ -368,7 +368,7 @@ func TestSelectCount(t *testing.T) {
 	defer mogi.Reset()
 	db := openDB()
 
-	mogi.Select("count(abc)", "count(*)").StubCSV("")
+	mogi.Select("count(abc)", "count(*)").StubCSV("1,5")
 	_, err := db.Query("SELECT COUNT(abc), COUNT(*) FROM beer")
 	checkNil(t, err)
 }
@@ -415,6 +415,19 @@ func TestDelete(t *testing.T) {
 	if err != mogi.ErrUnstubbed {
 		t.Error("err should be ErrUnstubbed but is", err)
 	}
+}
+
+func TestNotify(t *testing.T) {
+	defer mogi.Reset()
+	db := openDB()
+
+	ch := make(chan struct{})
+
+	mogi.Insert().Into("beer").Notify(ch).StubResult(3, 1)
+	_, err := db.Exec("INSERT INTO beer (name, brewery, pct) VALUES (?, ?, ?)", "Mikkel’s Dream", "Mikkeller", 4.6)
+	checkNil(t, err)
+
+	<-ch
 }
 
 func runUnstubbedSelect(t *testing.T, db *sql.DB) {
