@@ -79,6 +79,12 @@ func (s *ExecStub) Where(col string, v ...interface{}) *ExecStub {
 	return s
 }
 
+// WhereOp further filters this stub by values of input and the operator used in the WHERE clause.
+func (s *ExecStub) WhereOp(col string, operator string, v ...interface{}) *ExecStub {
+	s.chain = append(s.chain, newWhereOpCond(col, v, operator))
+	return s
+}
+
 // Args further filters this stub, matching based on the args passed to the query
 func (s *ExecStub) Args(args ...driver.Value) *ExecStub {
 	s.chain = append(s.chain, argsCond{args})

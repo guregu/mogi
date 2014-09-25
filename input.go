@@ -137,14 +137,14 @@ func (in input) where() map[string]opval {
 	}
 	in.whereVars = extractBoolExpr(nil, w.Expr)
 	// replace placeholders
-	for k, v := range in.whereVars {
-		if a, ok := v.(arg); ok {
-			in.whereVars[k] = unify(in.args[int(a)])
+	for k, opv := range in.whereVars {
+		if a, ok := opv.v.(arg); ok {
+			in.whereVars[k] = opval{opv.op, unify(in.args[int(a)])}
 			continue
 		}
 
 		// arrays
-		if arr, ok := v.([]interface{}); ok {
+		if arr, ok := opv.v.([]interface{}); ok {
 			for i, v := range arr {
 				if a, ok := v.(arg); ok {
 					arr[i] = unify(in.args[int(a)])

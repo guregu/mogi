@@ -380,6 +380,11 @@ func TestSelectWhereIn(t *testing.T) {
 	mogi.Select().Where("pct", 5.4, 10.2).StubCSV("2")
 	_, err := db.Query("SELECT COUNT(*) FROM beer WHERE pct IN (5.4, ?)", 10.2)
 	checkNil(t, err)
+
+	mogi.Reset()
+	mogi.Select().WhereOp("pct", "IN", 5.4, 10.2).StubCSV("2")
+	_, err = db.Query("SELECT COUNT(*) FROM beer WHERE pct IN (5.4, ?)", 10.2)
+	checkNil(t, err)
 }
 
 func TestSelectStar(t *testing.T) {
@@ -406,6 +411,11 @@ func TestDelete(t *testing.T) {
 
 	mogi.Reset()
 	mogi.Delete().Table("beer").Where("id", 42).StubRowsAffected(1)
+	_, err = db.Exec("DELETE FROM beer WHERE id = ?", 42)
+	checkNil(t, err)
+
+	mogi.Reset()
+	mogi.Delete().Table("beer").WhereOp("id", "=", 42).StubRowsAffected(1)
 	_, err = db.Exec("DELETE FROM beer WHERE id = ?", 42)
 	checkNil(t, err)
 

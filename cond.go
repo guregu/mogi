@@ -135,6 +135,14 @@ func newWhereCond(col string, v []interface{}) whereCond {
 	}
 }
 
+func newWhereOpCond(col string, v []interface{}, op string) whereCond {
+	return whereCond{
+		col: col,
+		v:   unifyArray(v),
+		op:  op,
+	}
+}
+
 func (wc whereCond) matches(in input) bool {
 	vals := in.where()
 	vop, ok := vals[wc.col]
@@ -143,7 +151,7 @@ func (wc whereCond) matches(in input) bool {
 	}
 
 	// compare operators if necessary
-	if wc.op != "" && wc.op != vop.op {
+	if wc.op != "" && strings.ToLower(wc.op) != vop.op {
 		return false
 	}
 

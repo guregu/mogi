@@ -40,9 +40,9 @@ func (s *Stub) Where(col string, v ...interface{}) *Stub {
 	return s
 }
 
-// Where further filters this stub by values of input and the operator used in the WHERE clause.
+// WhereOp further filters this stub by values of input and the operator used in the WHERE clause.
 func (s *Stub) WhereOp(col string, operator string, v ...interface{}) *Stub {
-	s.chain = append(s.chain, newWhereOpCond(col, v))
+	s.chain = append(s.chain, newWhereOpCond(col, v, operator))
 	return s
 }
 

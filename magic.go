@@ -121,9 +121,9 @@ func extractTableNames(tables *[]string, from sqlparser.TableExpr) {
 	}
 }
 
-func extractBoolExpr(vals map[string]interface{}, expr sqlparser.BoolExpr) map[string]interface{} {
+func extractBoolExpr(vals map[string]opval, expr sqlparser.BoolExpr) map[string]opval {
 	if vals == nil {
-		vals = make(map[string]interface{})
+		vals = make(map[string]opval)
 	}
 	switch x := expr.(type) {
 	case *sqlparser.OrExpr:
@@ -134,7 +134,7 @@ func extractBoolExpr(vals map[string]interface{}, expr sqlparser.BoolExpr) map[s
 		extractBoolExpr(vals, x.Right)
 	case *sqlparser.ComparisonExpr:
 		column := transmogrify(x.Left).(string)
-		vals[column] = transmogrify(x.Right)
+		vals[column] = opval{x.Operator, transmogrify(x.Right)}
 	}
 	return vals
 }
