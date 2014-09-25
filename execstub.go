@@ -22,7 +22,7 @@ func Insert(cols ...string) *ExecStub {
 	}
 }
 
-// Select starts a new stub for UPDATE statements.
+// Update starts a new stub for UPDATE statements.
 // You can filter out which columns (from the SET statement) this stub is for.
 // If you don't pass any columns, it will stub all UPDATE queries.
 func Update(cols ...string) *ExecStub {

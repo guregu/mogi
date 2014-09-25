@@ -11,42 +11,6 @@ import (
 	"github.com/youtube/vitess/go/vt/sqlparser"
 )
 
-// convert args to their 64-bit versions
-// for easy comparisons
-func unify(v interface{}) interface{} {
-	switch x := v.(type) {
-	case int:
-		return int64(x)
-	case int32:
-		return int64(x)
-	case float32:
-		return float64(x)
-	}
-	return v
-}
-
-func unifyValues(arr []driver.Value) []driver.Value {
-	for i, v := range arr {
-		arr[i] = unify(v)
-	}
-	return arr
-}
-
-func unifyArray(arr []interface{}) []interface{} {
-	for i, v := range arr {
-		arr[i] = unify(v)
-	}
-	return arr
-}
-
-func lowercase(arr []string) []string {
-	lower := make([]string, 0, len(arr))
-	for _, str := range arr {
-		lower = append(lower, strings.ToLower(str))
-	}
-	return lower
-}
-
 // transmogrify takes sqlparser expressions and turns them into useful go values
 func transmogrify(v interface{}) interface{} {
 	switch x := v.(type) {
@@ -110,6 +74,34 @@ func transmogrify(v interface{}) interface{} {
 	return nil
 }
 
+// convert args to their 64-bit versions
+// for easy comparisons
+func unify(v interface{}) interface{} {
+	switch x := v.(type) {
+	case int:
+		return int64(x)
+	case int32:
+		return int64(x)
+	case float32:
+		return float64(x)
+	}
+	return v
+}
+
+func unifyValues(arr []driver.Value) []driver.Value {
+	for i, v := range arr {
+		arr[i] = unify(v)
+	}
+	return arr
+}
+
+func unifyArray(arr []interface{}) []interface{} {
+	for i, v := range arr {
+		arr[i] = unify(v)
+	}
+	return arr
+}
+
 func extractColumnName(nse *sqlparser.NonStarExpr) string {
 	if nse.As != nil {
 		return string(nse.As)
@@ -163,4 +155,12 @@ func stringify(v interface{}) string {
 		fmt.Printf("stringify unknown type %T: %v\n", v, v)
 	}
 	return "???"
+}
+
+func lowercase(arr []string) []string {
+	lower := make([]string, 0, len(arr))
+	for _, str := range arr {
+		lower = append(lower, strings.ToLower(str))
+	}
+	return lower
 }

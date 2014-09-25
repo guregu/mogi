@@ -13,11 +13,9 @@ type input struct {
 	statement sqlparser.Statement
 	args      []driver.Value
 
-	whereVars map[string]interface{}
+	whereVars map[string]opval
 	argCursor int
 }
-
-type arg int
 
 func newInput(query string, args []driver.Value) (in input, err error) {
 	in = input{
@@ -26,6 +24,13 @@ func newInput(query string, args []driver.Value) (in input, err error) {
 	}
 	in.statement, err = sqlparser.Parse(query)
 	return
+}
+
+type arg int
+
+type opval struct {
+	op string
+	v  interface{}
 }
 
 /*
@@ -112,8 +117,7 @@ func (in input) rows() []map[string]interface{} {
 }
 
 // for SELECT and UPDATE and DELETE
-// TODO: DRY
-func (in input) where() map[string]interface{} {
+func (in input) where() map[string]opval {
 	if in.whereVars != nil {
 		return in.whereVars
 	}
@@ -129,7 +133,7 @@ func (in input) where() map[string]interface{} {
 		return nil
 	}
 	if w == nil {
-		return map[string]interface{}{}
+		return map[string]opval{}
 	}
 	in.whereVars = extractBoolExpr(nil, w.Expr)
 	// replace placeholders

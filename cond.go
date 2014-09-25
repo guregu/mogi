@@ -124,6 +124,7 @@ func (tc tableCond) String() string {
 
 type whereCond struct {
 	col string
+	op  string
 	v   []interface{}
 }
 
@@ -136,15 +137,21 @@ func newWhereCond(col string, v []interface{}) whereCond {
 
 func (wc whereCond) matches(in input) bool {
 	vals := in.where()
-	v, ok := vals[wc.col]
+	vop, ok := vals[wc.col]
 	if !ok {
 		return false
 	}
-	// if we aren't comparing against an array, use the first value
-	if _, isArray := v.([]interface{}); !isArray {
-		return reflect.DeepEqual(wc.v[0], v)
+
+	// compare operators if necessary
+	if wc.op != "" && wc.op != vop.op {
+		return false
 	}
-	return reflect.DeepEqual(wc.v, v)
+
+	// if we aren't comparing against an array, use the first value
+	if _, isArray := vop.v.([]interface{}); !isArray {
+		return reflect.DeepEqual(wc.v[0], vop.v)
+	}
+	return reflect.DeepEqual(wc.v, vop.v)
 }
 
 func (wc whereCond) priority() int {
