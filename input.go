@@ -13,8 +13,8 @@ type input struct {
 	statement sqlparser.Statement
 	args      []driver.Value
 
-	whereVars map[string]opval
-	argCursor int
+	whereVars   map[string]interface{}
+	whereOpVars map[colop]interface{}
 }
 
 func newInput(query string, args []driver.Value) (in input, err error) {
@@ -33,6 +33,11 @@ type opval struct {
 	v  interface{}
 }
 
+type colop struct {
+	col string
+	op  string
+}
+
 /*
 Column name rules:
 SELECT a        → a
@@ -41,7 +46,6 @@ SELECT a.b AS c → c
 */
 func (in input) cols() []string {
 	var cols []string
-	in.argCursor = 0
 
 	switch x := in.statement.(type) {
 	case *sqlparser.Select:
@@ -117,7 +121,7 @@ func (in input) rows() []map[string]interface{} {
 }
 
 // for SELECT and UPDATE and DELETE
-func (in input) where() map[string]opval {
+func (in input) where() map[string]interface{} {
 	if in.whereVars != nil {
 		return in.whereVars
 	}
@@ -133,18 +137,18 @@ func (in input) where() map[string]opval {
 		return nil
 	}
 	if w == nil {
-		return map[string]opval{}
+		return map[string]interface{}{}
 	}
 	in.whereVars = extractBoolExpr(nil, w.Expr)
 	// replace placeholders
-	for k, opv := range in.whereVars {
-		if a, ok := opv.v.(arg); ok {
-			in.whereVars[k] = opval{opv.op, unify(in.args[int(a)])}
+	for k, v := range in.whereVars {
+		if a, ok := v.(arg); ok {
+			in.whereVars[k] = unify(in.args[int(a)])
 			continue
 		}
 
 		// arrays
-		if arr, ok := opv.v.([]interface{}); ok {
+		if arr, ok := v.([]interface{}); ok {
 			for i, v := range arr {
 				if a, ok := v.(arg); ok {
 					arr[i] = unify(in.args[int(a)])
@@ -153,4 +157,43 @@ func (in input) where() map[string]opval {
 		}
 	}
 	return in.whereVars
+}
+
+// for SELECT and UPDATE and DELETE
+func (in input) whereOp() map[colop]interface{} {
+	if in.whereOpVars != nil {
+		return in.whereOpVars
+	}
+	var w *sqlparser.Where
+	switch x := in.statement.(type) {
+	case *sqlparser.Select:
+		w = x.Where
+	case *sqlparser.Update:
+		w = x.Where
+	case *sqlparser.Delete:
+		w = x.Where
+	default:
+		return nil
+	}
+	if w == nil {
+		return map[colop]interface{}{}
+	}
+	in.whereOpVars = extractBoolExprWithOps(nil, w.Expr)
+	// replace placeholders
+	for k, v := range in.whereOpVars {
+		if a, ok := v.(arg); ok {
+			in.whereOpVars[k] = unify(in.args[int(a)])
+			continue
+		}
+
+		// arrays
+		if arr, ok := v.([]interface{}); ok {
+			for i, v := range arr {
+				if a, ok := v.(arg); ok {
+					arr[i] = unify(in.args[int(a)])
+				}
+			}
+		}
+	}
+	return in.whereOpVars
 }
