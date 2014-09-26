@@ -30,6 +30,11 @@ func TestDelete(t *testing.T) {
 	checkNil(t, err)
 
 	mogi.Reset()
+	mogi.Delete().Table("beer").WhereOp("id", "=", 42).WhereOp("id", ">", 100).StubRowsAffected(1)
+	_, err = db.Exec("DELETE FROM beer WHERE id = ? OR id > 100", 42)
+	checkNil(t, err)
+
+	mogi.Reset()
 	mogi.Delete().Table("beer").Where("id", 50).StubRowsAffected(1)
 	_, err = db.Exec("DELETE FROM beer WHERE id = ?", 42)
 	if err != mogi.ErrUnstubbed {

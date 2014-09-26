@@ -69,7 +69,7 @@ func (wc whereOpCond) matches(in input) bool {
 }
 
 func (wc whereOpCond) priority() int {
-	return 1
+	return 2
 }
 
 func (wc whereOpCond) String() string {
