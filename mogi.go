@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrUnstubbed  = errors.New("query not stubbed")
-	ErrUnresolved = errors.New("query matched but no stub data")
+	ErrUnstubbed  = errors.New("mogi: query not stubbed")
+	ErrUnresolved = errors.New("mogi: query matched but no stub data")
 
 	errNotSet = errors.New("value set to -1")
 )
