@@ -84,6 +84,8 @@ func unify(v interface{}) interface{} {
 		return int64(x)
 	case float32:
 		return float64(x)
+	case string:
+		return []byte(x)
 	}
 	return v
 }
