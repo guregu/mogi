@@ -2,18 +2,11 @@ package mogi
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"reflect"
+	"strings"
 	"time"
 )
-
-/*
-int64
-float64
-bool
-[]byte
-string   [*] everywhere except from Rows.Next.
-time.Time
-*/
 
 // unify converts values to fit driver.Value,
 // except []byte which is converted to string.
@@ -100,4 +93,16 @@ func unifyInterfaces(slice []interface{}) []interface{} {
 		slice[i] = unify(v)
 	}
 	return slice
+}
+
+func stringify(v interface{}) string {
+	return fmt.Sprintf("%s", v)
+}
+
+func lowercase(strs []string) []string {
+	lower := make([]string, 0, len(strs))
+	for _, str := range strs {
+		lower = append(lower, strings.ToLower(str))
+	}
+	return lower
 }

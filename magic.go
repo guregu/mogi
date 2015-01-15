@@ -127,29 +127,3 @@ func extractBoolExprWithOps(vals map[colop]interface{}, expr sqlparser.BoolExpr)
 	}
 	return vals
 }
-
-func stringify(v interface{}) string {
-	switch x := v.(type) {
-	case string:
-		return x
-	case []byte:
-		return string(x)
-	case int64:
-		return strconv.FormatInt(x, 10)
-	case float64:
-		return strconv.FormatFloat(x, 'f', -1, 64)
-	case nil:
-		return "NULL"
-	default:
-		fmt.Printf("stringify unknown type %T: %v\n", v, v)
-	}
-	return "???"
-}
-
-func lowercase(arr []string) []string {
-	lower := make([]string, 0, len(arr))
-	for _, str := range arr {
-		lower = append(lower, strings.ToLower(str))
-	}
-	return lower
-}
