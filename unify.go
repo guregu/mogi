@@ -17,6 +17,12 @@ func unify(v interface{}) interface{} {
 		return x
 	case bool:
 		return x
+	case driver.Valuer:
+		v, err := x.Value()
+		if err != nil {
+			panic(err)
+		}
+		return v
 
 	// int64
 	case int64:
