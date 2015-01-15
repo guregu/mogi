@@ -3,7 +3,10 @@
 
 mogi is a fancy SQL mocking/stubbing library for Go. It uses the [vitess](https://github.com/youtube/vitess) SQL parser for maximum happiness. 
 
-It's not finished yet. Complex queries will break it. Stay tuned! 
+It's not finished yet. Subqueries and complex queries (like ON DUPLICATED AT) won't work. Stay tuned! 
+
+**Note**: because vitess is a MySQL-flavored parser, other kinds of (non-)standard SQL may break mogi. 
+
 
 ### Usage
 
