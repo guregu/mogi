@@ -60,9 +60,10 @@ func TestSelectWhere(t *testing.T) {
 	runBeerSelectQuery(t, db)
 
 	// where with weird type
-	type coolInt int
+	type 数字 int
+	五 := 数字(5)
 	mogi.Reset()
-	mogi.Select().From("beer").Where("pct", coolInt(5)).StubCSV(beerCSV)
+	mogi.Select().From("beer").Where("pct", &五).StubCSV(beerCSV)
 	runBeerSelectQuery(t, db)
 
 	// wrong where
