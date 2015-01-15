@@ -1,7 +1,6 @@
 package mogi
 
 import (
-	"database/sql/driver"
 	"fmt"
 	"log"
 	"strconv"
@@ -72,36 +71,6 @@ func transmogrify(v interface{}) interface{} {
 		//panic(x)
 	}
 	return nil
-}
-
-// convert args to their 64-bit versions
-// for easy comparisons
-func unify(v interface{}) interface{} {
-	switch x := v.(type) {
-	case int:
-		return int64(x)
-	case int32:
-		return int64(x)
-	case float32:
-		return float64(x)
-	case string:
-		return []byte(x)
-	}
-	return v
-}
-
-func unifyValues(arr []driver.Value) []driver.Value {
-	for i, v := range arr {
-		arr[i] = unify(v)
-	}
-	return arr
-}
-
-func unifyArray(arr []interface{}) []interface{} {
-	for i, v := range arr {
-		arr[i] = unify(v)
-	}
-	return arr
 }
 
 func extractColumnName(nse *sqlparser.NonStarExpr) string {

@@ -14,7 +14,7 @@ type whereCond struct {
 func newWhereCond(col string, v []interface{}) whereCond {
 	return whereCond{
 		col: strings.ToLower(col),
-		v:   unifyArray(v),
+		v:   unifyInterfaces(v),
 	}
 }
 
@@ -49,7 +49,7 @@ type whereOpCond struct {
 func newWhereOpCond(col string, v []interface{}, op string) whereOpCond {
 	return whereOpCond{
 		col: strings.ToLower(col),
-		v:   unifyArray(v),
+		v:   unifyInterfaces(v),
 		op:  strings.ToLower(op),
 	}
 }

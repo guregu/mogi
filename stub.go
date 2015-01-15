@@ -13,6 +13,10 @@ type Stub struct {
 	resolve func(input)
 }
 
+type subquery struct {
+	chain condchain
+}
+
 // Select starts a new stub for SELECT statements.
 // You can filter out which columns to use this stub for.
 // If you don't pass any columns, it will stub all SELECT queries.
@@ -89,6 +93,10 @@ func (s *Stub) Stub(rows [][]driver.Value) {
 func (s *Stub) StubError(err error) {
 	s.err = err
 	addStub(s)
+}
+
+func (s *Stub) Subquery() subquery {
+	return subquery{chain: s.chain}
 }
 
 func (s *Stub) matches(in input) bool {
