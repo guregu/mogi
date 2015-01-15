@@ -33,6 +33,8 @@ func unify(v interface{}) interface{} {
 		return int64(x)
 
 	// float64
+	case float64:
+		return x
 	case float32:
 		return float64(x)
 
