@@ -10,9 +10,13 @@ import (
 )
 
 var (
-	ErrUnstubbed  = errors.New("mogi: query not stubbed")
+	// ErrUnstubbed is returned as the result for unstubbed queries.
+	ErrUnstubbed = errors.New("mogi: query not stubbed")
+	// ErrUnresolved is returned as the result of a stub that was matched,
+	// but whose data could not be resolved. For example, exceeded LIMITs.
 	ErrUnresolved = errors.New("mogi: query matched but no stub data")
 
+	// errNotSet is used for Exec results stubbed as -1.
 	errNotSet = errors.New("value set to -1")
 )
 

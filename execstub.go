@@ -11,7 +11,7 @@ type ExecStub struct {
 	err    error
 }
 
-// Select starts a new stub for INSERT statements.
+// Insert starts a new stub for INSERT statements.
 // You can filter out which columns to use this stub for.
 // If you don't pass any columns, it will stub all INSERT queries.
 func Insert(cols ...string) *ExecStub {
@@ -40,7 +40,7 @@ func Delete() *ExecStub {
 	}
 }
 
-// Into further filters this stub, matching the target table in INSERT, UPDATE, or DELETE.
+// Table further filters this stub, matching the target table in INSERT, UPDATE, or DELETE.
 func (s *ExecStub) Table(table string) *ExecStub {
 	s.chain = append(s.chain, tableCond{
 		table: table,
@@ -131,7 +131,7 @@ func (s *ExecStub) StubRowsAffected(rowsAffected int64) {
 	s.StubResult(-1, rowsAffected)
 }
 
-// Stub takes an error and registers this stub with the driver
+// StubError takes an error and registers this stub with the driver
 func (s *ExecStub) StubError(err error) {
 	s.err = err
 	addExecStub(s)
