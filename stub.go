@@ -107,11 +107,7 @@ func (s *Stub) rows(in input) (*rows, error) {
 	switch {
 	case s.err != nil:
 		return nil, s.err
-	case s.data == nil && s.err == nil:
-		// try to resolve the values
-		if s.resolve == nil {
-			return nil, ErrUnresolved
-		}
+	case s.data == nil && s.resolve != nil:
 		s.resolve(in)
 	}
 	return newRows(in.cols(), s.data), nil

@@ -55,6 +55,9 @@ func (r *rows) Next(dest []driver.Value) error {
 // TODO rewrite
 func csvToValues(cols []string, s string) [][]driver.Value {
 	var data [][]driver.Value
+	if s == "" {
+		return nil
+	}
 
 	res := strings.NewReader(strings.TrimSpace(s))
 	csvReader := csv.NewReader(res)
