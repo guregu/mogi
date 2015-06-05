@@ -3,6 +3,7 @@ package mogi
 import (
 	"database/sql/driver"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 	"time"
@@ -116,6 +117,7 @@ func lowercase(strs []string) []string {
 }
 
 func equals(src interface{}, to interface{}) bool {
+outer:
 	switch tox := to.(type) {
 	case time.Time:
 		// we need to convert source timestamps to time.Time
@@ -145,7 +147,32 @@ func equals(src interface{}, to interface{}) bool {
 			return tox == (srcx != 0)
 		case bool:
 			return tox == srcx
+		case string:
+			other, ok := str2bool(srcx)
+			if !ok {
+				break outer
+			}
+			return tox == other
+		case []byte:
+			other, ok := str2bool(string(srcx))
+			if !ok {
+				break outer
+			}
+			return tox == other
 		}
 	}
 	return reflect.DeepEqual(src, to)
+}
+
+// converts boolean-like strings to a bool and returns
+func str2bool(str string) (v bool, ok bool) {
+	switch str {
+	case "true", "1":
+		return true, true
+	case "false", "0":
+		return false, true
+	default:
+		log.Println("mogi: unknown boolean string:", str)
+		return false, false
+	}
 }
