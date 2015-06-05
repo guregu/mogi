@@ -2,6 +2,7 @@ package mogi_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/guregu/mogi"
 )
@@ -66,6 +67,24 @@ func TestUpdateValues(t *testing.T) {
 	_, err := db.Exec(`UPDATE beer
 					   SET name = "Mikkel’s Dream", brewery = "Mikkeller", pct = ?
 					   WHERE id = 3`, 4.6)
+	checkNil(t, err)
+
+	// time.Time
+	mogi.Reset()
+	mogi.ParseTime(time.RFC3339)
+	now := time.Now()
+	mogi.Update().Value("updated_at", now).Value("brewery", "Mikkeller").Value("pct", 4.6).StubRowsAffected(1)
+	_, err = db.Exec(`UPDATE beer
+					   SET updated_at = ?, brewery = "Mikkeller", pct = ?
+					   WHERE id = 3`, now, 4.6)
+	checkNil(t, err)
+
+	// boolean as 1 vs true
+	mogi.Reset()
+	mogi.Update().Value("awesome", true).StubRowsAffected(1)
+	_, err = db.Exec(`UPDATE beer
+					   SET awesome = 1
+					   WHERE id = 3`)
 	checkNil(t, err)
 
 	// with wrong values

@@ -106,14 +106,14 @@ func (vc valueCond) matches(in input) bool {
 		if !ok {
 			return false
 		}
-		return reflect.DeepEqual(vc.v, v)
+		return equals(v, vc.v)
 	case *sqlparser.Update:
 		values := in.values()
 		v, ok := values[vc.col]
 		if !ok {
 			return false
 		}
-		return reflect.DeepEqual(vc.v, v)
+		return equals(v, vc.v)
 	}
 	return false
 }

@@ -2,7 +2,6 @@ package mogi
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -25,11 +24,18 @@ func (wc whereCond) matches(in input) bool {
 		return false
 	}
 
-	// if we aren't comparing against an array, use the first value
-	if _, isArray := v.([]interface{}); !isArray {
-		return reflect.DeepEqual(wc.v[0], v)
+	// compare slices
+	if slice, ok := v.([]interface{}); ok {
+		for i, src := range slice {
+			if !equals(src, wc.v[i]) {
+				return false
+			}
+		}
+		return true
 	}
-	return reflect.DeepEqual(wc.v, v)
+
+	// compare single value
+	return equals(v, wc.v[0])
 }
 
 func (wc whereCond) priority() int {
@@ -61,11 +67,18 @@ func (wc whereOpCond) matches(in input) bool {
 		return false
 	}
 
-	// if we aren't comparing against an array, use the first value
-	if _, isArray := v.([]interface{}); !isArray {
-		return reflect.DeepEqual(wc.v[0], v)
+	// compare slices
+	if slice, ok := v.([]interface{}); ok {
+		for i, src := range slice {
+			if !equals(src, wc.v[i]) {
+				return false
+			}
+		}
+		return true
 	}
-	return reflect.DeepEqual(wc.v, v)
+
+	// compare single value
+	return equals(v, wc.v[0])
 }
 
 func (wc whereOpCond) priority() int {

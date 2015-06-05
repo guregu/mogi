@@ -114,3 +114,38 @@ func lowercase(strs []string) []string {
 	}
 	return lower
 }
+
+func equals(src interface{}, to interface{}) bool {
+	switch tox := to.(type) {
+	case time.Time:
+		// we need to convert source timestamps to time.Time
+		if timeLayout == "" {
+			break
+		}
+		var other time.Time
+		switch srcx := src.(type) {
+		case string:
+			var err error
+			if other, err = time.Parse(timeLayout, srcx); err != nil {
+				break
+			}
+		case []byte:
+			var err error
+			if other, err = time.Parse(timeLayout, string(srcx)); err != nil {
+				break
+			}
+		case time.Time:
+			other = srcx
+		}
+		return tox.Format(timeLayout) == other.Format(timeLayout)
+	case bool:
+		// some drivers send booleans as 0 and 1
+		switch srcx := src.(type) {
+		case int64:
+			return tox == (srcx != 0)
+		case bool:
+			return tox == srcx
+		}
+	}
+	return reflect.DeepEqual(src, to)
+}
