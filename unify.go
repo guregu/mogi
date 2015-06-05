@@ -164,7 +164,7 @@ outer:
 	return reflect.DeepEqual(src, to)
 }
 
-// converts boolean-like strings to a bool and returns
+// converts boolean-like strings to a bool
 func str2bool(str string) (v bool, ok bool) {
 	switch str {
 	case "true", "1":
