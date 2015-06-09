@@ -117,7 +117,6 @@ func lowercase(strs []string) []string {
 }
 
 func equals(src interface{}, to interface{}) bool {
-outer:
 	switch tox := to.(type) {
 	case time.Time:
 		// we need to convert source timestamps to time.Time
@@ -129,12 +128,12 @@ outer:
 		case string:
 			var err error
 			if other, err = time.Parse(timeLayout, srcx); err != nil {
-				break
+				goto deep
 			}
 		case []byte:
 			var err error
 			if other, err = time.Parse(timeLayout, string(srcx)); err != nil {
-				break
+				goto deep
 			}
 		case time.Time:
 			other = srcx
@@ -150,17 +149,18 @@ outer:
 		case string:
 			other, ok := str2bool(srcx)
 			if !ok {
-				break outer
+				goto deep
 			}
 			return tox == other
 		case []byte:
 			other, ok := str2bool(string(srcx))
 			if !ok {
-				break outer
+				goto deep
 			}
 			return tox == other
 		}
 	}
+deep:
 	return reflect.DeepEqual(src, to)
 }
 
