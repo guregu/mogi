@@ -15,12 +15,12 @@ func transmogrify(v interface{}) interface{} {
 	switch x := v.(type) {
 	case *sqlparser.ColName:
 		name := string(x.Name)
-		if x.Qualifier != nil {
+		if x.Qualifier != "" {
 			name = fmt.Sprintf("%s.%s", x.Qualifier, name)
 		}
 		return name
 	case *sqlparser.NonStarExpr:
-		if x.As != nil {
+		if x.As != "" {
 			return string(x.As)
 		}
 		return transmogrify(x.Expr)
@@ -74,7 +74,7 @@ func transmogrify(v interface{}) interface{} {
 }
 
 func extractColumnName(nse *sqlparser.NonStarExpr) string {
-	if nse.As != nil {
+	if nse.As != "" {
 		return string(nse.As)
 	}
 	return stringify(transmogrify(nse.Expr))
