@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	// "github.com/davecgh/go-spew/spew"
-	"github.com/youtube/vitess/go/vt/sqlparser"
+	"github.com/guregu/mogi/internal/sqlparser"
 )
 
 // transmogrify takes sqlparser expressions and turns them into useful go values

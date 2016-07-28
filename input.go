@@ -5,7 +5,7 @@ import (
 	"log"
 
 	// "github.com/davecgh/go-spew/spew"
-	"github.com/youtube/vitess/go/vt/sqlparser"
+	"github.com/guregu/mogi/internal/sqlparser"
 )
 
 type input struct {

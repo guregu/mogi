@@ -1,7 +1,7 @@
 package mogi
 
 import (
-	"github.com/youtube/vitess/go/vt/sqlparser"
+	"github.com/guregu/mogi/internal/sqlparser"
 )
 
 type deleteCond struct{}

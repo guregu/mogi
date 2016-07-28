@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/youtube/vitess/go/vt/sqlparser"
+	"github.com/guregu/mogi/internal/sqlparser"
 )
 
 type selectCond struct {
