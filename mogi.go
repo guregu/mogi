@@ -66,7 +66,7 @@ func Dump() {
 		case s.err != nil:
 			fmt.Fprintf(w, "\t\t→ error: %v\t\n", s.err)
 		case s.data != nil, s.resolve != nil:
-			fmt.Fprintln(w, "\t\t→ data\t\n")
+			fmt.Fprintf(w, "\t\t→ data\t\n")
 		}
 	}
 	fmt.Fprintf(w, "\t\t\t\n")
