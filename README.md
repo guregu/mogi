@@ -1,7 +1,7 @@
 ## mogi [![GoDoc](https://godoc.org/github.com/guregu/mogi?status.svg)](https://godoc.org/github.com/guregu/mogi) [![Coverage](http://gocover.io/_badge/github.com/guregu/mogi)](http://gocover.io/github.com/guregu/mogi)
 `import "github.com/guregu/mogi"`
 
-mogi is a fancy SQL mocking/stubbing library for Go. It uses the [vitess](https://github.com/youtube/vitess) SQL parser for maximum happiness. 
+mogi is a fancy SQL mocking/stubbing library for Go. It uses the [vitess](https://github.com/vitessio/vitess) SQL parser for maximum happiness.
 
 **Note**: because vitess is a MySQL-flavored parser, other kinds of (non-)standard SQL may break mogi. Mogi isn't finished yet. You can't yet filter stubs based on subqueries and complex bits like ON DUPLICATED AT.
 
